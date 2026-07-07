@@ -1,0 +1,14 @@
+node_modules
+dist
+dist-ssr
+.env
+*.local
+*.tsbuildinfo
+
+# editores
+.vscode/*
+!.vscode/extensions.json
+.idea
+
+# PWA gerado em build
+dev-dist

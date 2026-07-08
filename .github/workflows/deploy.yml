@@ -1,0 +1,65 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - main
+      - staging
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - run: bun install --frozen-lockfile
+
+      - run: bun run typecheck
+
+      # TODO: adicionar quando existir "bun run lint"
+      # - run: bun run lint
+
+      - run: bun run test
+
+      # TODO: adicionar quando existirem testes e2e (Playwright)
+      # - run: bun run test:e2e
+
+  deploy:
+    needs: ci
+    runs-on: ubuntu-latest
+    concurrency: deploy-${{ github.ref_name }}
+    permissions:
+      contents: read
+      deployments: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - run: bun install --frozen-lockfile
+
+      - name: Build (produção)
+        if: github.ref_name == 'main'
+        run: bun run build
+        env:
+          VITE_API_BASE_URL: https://bomberquiz-api.fly.dev
+
+      - name: Build (staging)
+        if: github.ref_name == 'staging'
+        run: bun run build
+        env:
+          VITE_API_BASE_URL: https://bomberquiz-api-staging.fly.dev
+
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+          command: pages deploy dist --project-name=bomberquiz-web --branch=${{ github.ref_name }}

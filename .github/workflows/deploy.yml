@@ -48,7 +48,7 @@ jobs:
         if: github.ref_name == 'main'
         run: bun run build
         env:
-          VITE_API_BASE_URL: https://bomberquiz-api.fly.dev
+          VITE_API_BASE_URL: https://api.bomberquiz.com.br
 
       - name: Build (staging)
         if: github.ref_name == 'staging'

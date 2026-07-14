@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { validateBrazilianPhone } from "@/lib/phone"
 
 // Espelha as regras gerais de auth.md — validação client-side é só para feedback rápido;
 // o backend continua sendo a fonte de verdade.
@@ -26,9 +27,10 @@ export const registerSchema = z
       .max(120, "Nome muito longo")
       .refine((v) => v.trim().includes(" "), "Informe nome e sobrenome"),
     email: z.string().email("E-mail inválido"),
-    phone: z
-      .string()
-      .regex(/^55\d{11}$/, "Formato esperado: 55 + DDD + número (ex.: 5561999999999)"),
+    phone: z.string().refine(
+      (v) => validateBrazilianPhone(v).valid,
+      (v) => ({ message: (validateBrazilianPhone(v) as { reason: string }).reason }),
+    ),
     dob: z
       .string()
       .min(1, "Informe a data de nascimento")

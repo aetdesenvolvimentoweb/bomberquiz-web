@@ -1,4 +1,5 @@
 import { z } from "zod"
+import { validateBrazilianPhone } from "@/lib/phone"
 
 function isAtLeast18(dob: string): boolean {
   const birthDate = new Date(dob)
@@ -13,7 +14,10 @@ export const updateProfileSchema = z.object({
     .min(3, "Informe o nome completo")
     .max(120, "Nome muito longo")
     .refine((v) => v.trim().includes(" "), "Informe nome e sobrenome"),
-  phone: z.string().regex(/^55\d{11}$/, "Formato esperado: 55 + DDD + número (ex.: 5561999999999)"),
+  phone: z.string().refine(
+    (v) => validateBrazilianPhone(v).valid,
+    (v) => ({ message: (validateBrazilianPhone(v) as { reason: string }).reason }),
+  ),
   dob: z.string().min(1, "Informe a data de nascimento").refine(isAtLeast18, "É necessário ter pelo menos 18 anos"),
   sex: z.enum(["masculino", "feminino", "prefere_nao_informar"], { message: "Selecione uma opção" }),
 })

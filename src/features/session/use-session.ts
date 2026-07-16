@@ -50,5 +50,7 @@ export function useSession() {
     user: query.data?.user ?? null,
     requiresConsentRenewal: query.data?.requiresConsentRenewal ?? false,
     isPending: query.isPending,
+    isError: query.isError,
+    refetch: query.refetch,
   }
 }

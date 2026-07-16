@@ -1,5 +1,6 @@
-import { createBrowserRouter } from "react-router-dom"
+import { createBrowserRouter, Outlet } from "react-router-dom"
 import { RequireAuth, RequireGuest, ConsentGate } from "@/features/session/guards"
+import { RouteErrorBoundary } from "@/components/route-error-boundary"
 import { RegisterPage } from "@/pages/auth/register-page"
 import { LoginPage } from "@/pages/auth/login-page"
 import { VerifyEmailPage } from "@/pages/auth/verify-email-page"
@@ -15,38 +16,44 @@ import { HomePage } from "@/pages/home-page"
 import { IndexRedirectPage } from "@/pages/index-redirect-page"
 
 export const router = createBrowserRouter([
-  // Públicas
-  { path: "/termos", element: <TermsPage /> },
-  { path: "/privacidade", element: <PrivacyPage /> },
-  { path: "/verificar-email", element: <VerifyEmailPage /> },
-  { path: "/reenviar-verificacao", element: <ResendVerificationPage /> },
-  { path: "/redefinir-senha", element: <ResetPasswordPage /> },
-
-  // Apenas visitante (sem sessão)
   {
-    element: <RequireGuest />,
+    element: <Outlet />,
+    errorElement: <RouteErrorBoundary />,
     children: [
-      { path: "/login", element: <LoginPage /> },
-      { path: "/cadastro", element: <RegisterPage /> },
-      { path: "/esqueci-senha", element: <ForgotPasswordPage /> },
-    ],
-  },
+      // Públicas
+      { path: "/termos", element: <TermsPage /> },
+      { path: "/privacidade", element: <PrivacyPage /> },
+      { path: "/verificar-email", element: <VerifyEmailPage /> },
+      { path: "/reenviar-verificacao", element: <ResendVerificationPage /> },
+      { path: "/redefinir-senha", element: <ResetPasswordPage /> },
 
-  // Autenticadas
-  {
-    element: <RequireAuth />,
-    children: [
-      { path: "/consentimento", element: <ConsentRenewalPage /> },
+      // Apenas visitante (sem sessão)
       {
-        element: <ConsentGate />,
+        element: <RequireGuest />,
         children: [
-          { path: "/inicio", element: <HomePage /> },
-          { path: "/perfil", element: <ProfilePage /> },
-          { path: "/perfil/email/confirmar", element: <EmailConfirmPage /> },
+          { path: "/login", element: <LoginPage /> },
+          { path: "/cadastro", element: <RegisterPage /> },
+          { path: "/esqueci-senha", element: <ForgotPasswordPage /> },
         ],
       },
+
+      // Autenticadas
+      {
+        element: <RequireAuth />,
+        children: [
+          { path: "/consentimento", element: <ConsentRenewalPage /> },
+          {
+            element: <ConsentGate />,
+            children: [
+              { path: "/inicio", element: <HomePage /> },
+              { path: "/perfil", element: <ProfilePage /> },
+              { path: "/perfil/email/confirmar", element: <EmailConfirmPage /> },
+            ],
+          },
+        ],
+      },
+
+      { path: "/", element: <IndexRedirectPage /> },
     ],
   },
-
-  { path: "/", element: <IndexRedirectPage /> },
 ])

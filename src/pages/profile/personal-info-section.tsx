@@ -115,7 +115,7 @@ export function PersonalInfoSection({ user }: { user: SessionUser }) {
               )}
             />
 
-            <Button type="submit" disabled={updateProfileMutation.isPending}>
+            <Button type="submit" loading={updateProfileMutation.isPending}>
               {updateProfileMutation.isPending ? "Salvando…" : "Salvar alterações"}
             </Button>
           </form>

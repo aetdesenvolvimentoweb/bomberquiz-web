@@ -3,6 +3,7 @@ import { Link, useSearchParams } from "react-router-dom"
 import { useQueryClient } from "@tanstack/react-query"
 import { AuthLayout } from "@/components/auth-layout"
 import { Button } from "@/components/ui/button"
+import { Spinner } from "@/components/ui/spinner"
 import { useConfirmEmailChange } from "@/features/profile/api"
 import { SESSION_QUERY_KEY } from "@/features/session/use-session"
 
@@ -36,7 +37,11 @@ export function EmailConfirmPage() {
 
   return (
     <AuthLayout title="Confirmação de troca de e-mail">
-      {status === "checking" && <p className="text-sm text-muted-foreground">Confirmando…</p>}
+      {status === "checking" && (
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Spinner /> Confirmando…
+        </div>
+      )}
 
       {status === "success" && (
         <div className="space-y-4">

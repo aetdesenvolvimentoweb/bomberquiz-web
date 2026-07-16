@@ -80,7 +80,7 @@ export function LoginPage() {
             </Link>
           </div>
 
-          <Button type="submit" className="w-full" disabled={loginMutation.isPending}>
+          <Button type="submit" className="w-full" loading={loginMutation.isPending}>
             {loginMutation.isPending ? "Entrando…" : "Entrar"}
           </Button>
         </form>

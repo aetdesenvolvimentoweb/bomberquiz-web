@@ -57,7 +57,7 @@ export function ResendVerificationPage() {
             )}
           />
 
-          <Button type="submit" className="w-full" disabled={resendMutation.isPending}>
+          <Button type="submit" className="w-full" loading={resendMutation.isPending}>
             {resendMutation.isPending ? "Enviando…" : "Reenviar e-mail"}
           </Button>
         </form>

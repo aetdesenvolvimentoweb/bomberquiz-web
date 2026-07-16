@@ -22,8 +22,8 @@ export function HomePage() {
         <Button asChild>
           <Link to="/perfil">Meu perfil</Link>
         </Button>
-        <Button variant="outline" onClick={() => logoutMutation.mutate()} disabled={logoutMutation.isPending}>
-          Sair
+        <Button variant="outline" onClick={() => logoutMutation.mutate()} loading={logoutMutation.isPending}>
+          {logoutMutation.isPending ? "Saindo…" : "Sair"}
         </Button>
       </div>
     </div>

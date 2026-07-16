@@ -83,7 +83,7 @@ export function ChangePasswordSection() {
               )}
             />
 
-            <Button type="submit" disabled={changePasswordMutation.isPending}>
+            <Button type="submit" loading={changePasswordMutation.isPending}>
               {changePasswordMutation.isPending ? "Salvando…" : "Trocar senha"}
             </Button>
           </form>

@@ -35,16 +35,16 @@ export function ConsentRenewalPage() {
         </p>
 
         <div className="flex gap-2">
-          <Button onClick={handleAccept} disabled={acceptConsentMutation.isPending} className="flex-1">
+          <Button onClick={handleAccept} loading={acceptConsentMutation.isPending} className="flex-1">
             {acceptConsentMutation.isPending ? "Registrando…" : "Aceitar e continuar"}
           </Button>
           <Button
             variant="outline"
             onClick={() => logoutMutation.mutate()}
-            disabled={logoutMutation.isPending}
+            loading={logoutMutation.isPending}
             className="flex-1"
           >
-            Recusar e sair
+            {logoutMutation.isPending ? "Saindo…" : "Recusar e sair"}
           </Button>
         </div>
       </div>

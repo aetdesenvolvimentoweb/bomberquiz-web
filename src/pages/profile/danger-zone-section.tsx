@@ -82,7 +82,7 @@ function DeactivateAccountDialog() {
             />
             <AlertDialogFooter>
               <AlertDialogCancel type="button">Cancelar</AlertDialogCancel>
-              <Button type="submit" variant="destructive" disabled={deactivateMutation.isPending}>
+              <Button type="submit" variant="destructive" loading={deactivateMutation.isPending}>
                 {deactivateMutation.isPending ? "Desativando…" : "Confirmar"}
               </Button>
             </AlertDialogFooter>
@@ -168,7 +168,7 @@ function DeleteAccountDialog() {
             />
             <AlertDialogFooter>
               <AlertDialogCancel type="button">Cancelar</AlertDialogCancel>
-              <Button type="submit" variant="destructive" disabled={deleteAccountMutation.isPending}>
+              <Button type="submit" variant="destructive" loading={deleteAccountMutation.isPending}>
                 {deleteAccountMutation.isPending ? "Excluindo…" : "Excluir definitivamente"}
               </Button>
             </AlertDialogFooter>

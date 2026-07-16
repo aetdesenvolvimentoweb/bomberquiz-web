@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react"
 import { Link, useSearchParams } from "react-router-dom"
 import { AuthLayout } from "@/components/auth-layout"
 import { Button } from "@/components/ui/button"
+import { Spinner } from "@/components/ui/spinner"
 import { env } from "@/lib/env"
 import { useQueryClient } from "@tanstack/react-query"
 import { SESSION_QUERY_KEY } from "@/features/session/use-session"
@@ -39,7 +40,11 @@ export function VerifyEmailPage() {
 
   return (
     <AuthLayout title="Verificação de e-mail">
-      {status === "checking" && <p className="text-sm text-muted-foreground">Confirmando seu e-mail…</p>}
+      {status === "checking" && (
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Spinner /> Confirmando seu e-mail…
+        </div>
+      )}
 
       {status === "success" && (
         <div className="space-y-4">

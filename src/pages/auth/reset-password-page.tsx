@@ -82,7 +82,7 @@ export function ResetPasswordPage() {
             )}
           />
 
-          <Button type="submit" className="w-full" disabled={resetPasswordMutation.isPending}>
+          <Button type="submit" className="w-full" loading={resetPasswordMutation.isPending}>
             {resetPasswordMutation.isPending ? "Salvando…" : "Redefinir senha"}
           </Button>
         </form>

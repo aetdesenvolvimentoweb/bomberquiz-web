@@ -61,7 +61,7 @@ export function ChangeEmailSection({ currentEmail }: { currentEmail: string }) {
                 )}
               />
 
-              <Button type="submit" disabled={requestEmailChangeMutation.isPending}>
+              <Button type="submit" loading={requestEmailChangeMutation.isPending}>
                 {requestEmailChangeMutation.isPending ? "Enviando…" : "Solicitar troca"}
               </Button>
             </form>

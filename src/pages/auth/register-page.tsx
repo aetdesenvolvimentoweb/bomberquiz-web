@@ -195,7 +195,7 @@ export function RegisterPage() {
             )}
           />
 
-          <Button type="submit" className="w-full" disabled={registerMutation.isPending}>
+          <Button type="submit" className="w-full" loading={registerMutation.isPending}>
             {registerMutation.isPending ? "Criando conta…" : "Criar conta"}
           </Button>
         </form>

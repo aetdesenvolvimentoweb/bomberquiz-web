@@ -62,7 +62,7 @@ export function ForgotPasswordPage() {
             )}
           />
 
-          <Button type="submit" className="w-full" disabled={forgotPasswordMutation.isPending}>
+          <Button type="submit" className="w-full" loading={forgotPasswordMutation.isPending}>
             {forgotPasswordMutation.isPending ? "Enviando…" : "Enviar link de recuperação"}
           </Button>
         </form>

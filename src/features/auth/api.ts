@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { toast } from "sonner"
 import { apiClient } from "@/lib/api/client"
-import { unwrap } from "@/lib/api/errors"
+import { ApiError, unwrap } from "@/lib/api/errors"
 import { SESSION_QUERY_KEY } from "@/features/session/use-session"
 import type { RegisterFormValues } from "./schemas"
 
@@ -46,6 +47,10 @@ export function useLogout() {
     onSuccess: () => {
       queryClient.setQueryData(SESSION_QUERY_KEY, { user: null, requiresConsentRenewal: false })
       queryClient.clear()
+    },
+    onError: (err) => {
+      const message = err instanceof ApiError ? err.message : "Não foi possível sair. Tente novamente."
+      toast.error(message)
     },
   })
 }

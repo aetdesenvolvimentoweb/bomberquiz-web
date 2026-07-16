@@ -21,6 +21,7 @@ import {
 import { useDeactivateAccount, useDeleteAccount } from "@/features/profile/api"
 import { reauthActionSchema, deleteAccountSchema, type ReauthActionFormValues, type DeleteAccountFormValues } from "@/features/profile/schemas"
 import { ApiError } from "@/lib/api/errors"
+import { applyServerFieldErrors } from "@/lib/api/form-errors"
 
 function DeactivateAccountDialog() {
   const [open, setOpen] = useState(false)
@@ -39,6 +40,7 @@ function DeactivateAccountDialog() {
       setOpen(false)
       navigate("/login", { replace: true })
     } catch (err) {
+      if (applyServerFieldErrors(form, err)) return
       const message = err instanceof ApiError ? err.message : "Não foi possível desativar a conta."
       toast.error(message)
     }
@@ -108,6 +110,7 @@ function DeleteAccountDialog() {
       setOpen(false)
       navigate("/login", { replace: true })
     } catch (err) {
+      if (applyServerFieldErrors(form, err)) return
       const message = err instanceof ApiError ? err.message : "Não foi possível excluir a conta."
       toast.error(message)
     }

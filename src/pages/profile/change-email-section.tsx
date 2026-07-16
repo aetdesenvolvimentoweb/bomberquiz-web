@@ -9,6 +9,9 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useRequestEmailChange } from "@/features/profile/api"
 import { requestEmailChangeSchema, type RequestEmailChangeFormValues } from "@/features/profile/schemas"
 import { ApiError } from "@/lib/api/errors"
+import { applyServerFieldErrors } from "@/lib/api/form-errors"
+
+const FIELD_MAP = { new_email: "newEmail" } as const
 
 export function ChangeEmailSection({ currentEmail }: { currentEmail: string }) {
   const [requested, setRequested] = useState(false)
@@ -24,6 +27,7 @@ export function ChangeEmailSection({ currentEmail }: { currentEmail: string }) {
       await requestEmailChangeMutation.mutateAsync(values.newEmail)
       setRequested(true)
     } catch (err) {
+      if (applyServerFieldErrors(form, err, FIELD_MAP)) return
       const message = err instanceof ApiError ? err.message : "Não foi possível solicitar a troca de e-mail."
       toast.error(message)
     }

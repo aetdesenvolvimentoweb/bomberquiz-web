@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query"
 import { apiClient } from "@/lib/api/client"
+import { ApiError, apiErrorFrom } from "@/lib/api/errors"
 
 export type SessionUser = {
   id: string
@@ -26,15 +27,14 @@ type SessionData = {
 export const SESSION_QUERY_KEY = ["session", "me"] as const
 
 async function fetchSession(): Promise<SessionData> {
-  const { data, response } = await apiClient.GET("/me")
+  const { data, error, response } = await apiClient.GET("/me")
 
   // Sem sessão ativa é um estado válido (usuário deslogado), não um erro de carregamento.
   if (response.status === 401) {
     return { user: null, requiresConsentRenewal: false }
   }
-  if (!response.ok || !data) {
-    throw new Error("Não foi possível carregar a sessão.")
-  }
+  if (error !== undefined) throw apiErrorFrom(response.status, error)
+  if (!data) throw new ApiError(response.status, null)
   return { user: data.user, requiresConsentRenewal: data.requires_consent_renewal }
 }
 

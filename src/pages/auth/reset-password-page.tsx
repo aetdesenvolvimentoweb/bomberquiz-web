@@ -9,6 +9,9 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useResetPassword } from "@/features/auth/api"
 import { resetPasswordSchema, type ResetPasswordFormValues } from "@/features/auth/schemas"
 import { ApiError } from "@/lib/api/errors"
+import { applyServerFieldErrors } from "@/lib/api/form-errors"
+
+const FIELD_MAP = { new_password: "newPassword" } as const
 
 export function ResetPasswordPage() {
   const [searchParams] = useSearchParams()
@@ -28,6 +31,7 @@ export function ResetPasswordPage() {
       toast.success("Senha redefinida com sucesso. Faça login novamente.")
       navigate("/login", { replace: true })
     } catch (err) {
+      if (applyServerFieldErrors(form, err, FIELD_MAP)) return
       const message = err instanceof ApiError ? err.message : "Não foi possível redefinir a senha."
       toast.error(message)
     }

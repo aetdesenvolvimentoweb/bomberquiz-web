@@ -2,6 +2,7 @@ import { useState } from "react"
 import { Link } from "react-router-dom"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { toast } from "sonner"
 import { AuthLayout } from "@/components/auth-layout"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -21,9 +22,12 @@ export function ForgotPasswordPage() {
   async function onSubmit(values: ForgotPasswordFormValues) {
     try {
       await forgotPasswordMutation.mutateAsync(values.email)
-    } finally {
-      // Resposta é sempre genérica (AUTH-RF-006 CA-1) — não há erro a distinguir para o usuário.
+      // Resposta de sucesso é sempre genérica (AUTH-RF-006 CA-1) — não revela se o
+      // e-mail existe. Uma falha real (rede, rate limit) ainda deve ser avisada,
+      // em vez de mostrar "e-mail enviado" para algo que não foi de fato tentado.
       setSent(true)
+    } catch {
+      toast.error("Não foi possível enviar o link agora. Tente novamente.")
     }
   }
 

@@ -12,6 +12,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useRegister } from "@/features/auth/api"
 import { registerSchema, type RegisterFormValues } from "@/features/auth/schemas"
 import { ApiError } from "@/lib/api/errors"
+import { applyServerFieldErrors } from "@/lib/api/form-errors"
 
 export function RegisterPage() {
   const [submitted, setSubmitted] = useState(false)
@@ -36,6 +37,7 @@ export function RegisterPage() {
       await registerMutation.mutateAsync(values)
       setSubmitted(true)
     } catch (err) {
+      if (applyServerFieldErrors(form, err)) return
       const message = err instanceof ApiError ? err.message : "Não foi possível criar a conta."
       toast.error(message)
     }

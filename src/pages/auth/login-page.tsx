@@ -9,6 +9,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useLogin } from "@/features/auth/api"
 import { loginSchema, type LoginFormValues } from "@/features/auth/schemas"
 import { ApiError } from "@/lib/api/errors"
+import { applyServerFieldErrors } from "@/lib/api/form-errors"
 
 export function LoginPage() {
   const navigate = useNavigate()
@@ -26,6 +27,7 @@ export function LoginPage() {
       const redirectTo = location.state?.from?.pathname ?? "/inicio"
       navigate(redirectTo, { replace: true })
     } catch (err) {
+      if (applyServerFieldErrors(form, err)) return
       if (err instanceof ApiError && err.code === "email_not_verified") {
         toast.error(err.message, {
           action: {

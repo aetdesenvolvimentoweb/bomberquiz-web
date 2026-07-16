@@ -10,6 +10,7 @@ import { useUpdateProfile } from "@/features/profile/api"
 import { updateProfileSchema, type UpdateProfileFormValues } from "@/features/profile/schemas"
 import type { SessionUser } from "@/features/session/use-session"
 import { ApiError } from "@/lib/api/errors"
+import { applyServerFieldErrors } from "@/lib/api/form-errors"
 
 export function PersonalInfoSection({ user }: { user: SessionUser }) {
   const updateProfileMutation = useUpdateProfile()
@@ -29,6 +30,7 @@ export function PersonalInfoSection({ user }: { user: SessionUser }) {
       await updateProfileMutation.mutateAsync(values)
       toast.success("Perfil atualizado.")
     } catch (err) {
+      if (applyServerFieldErrors(form, err)) return
       const message = err instanceof ApiError ? err.message : "Não foi possível atualizar o perfil."
       toast.error(message)
     }

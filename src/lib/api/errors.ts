@@ -37,28 +37,23 @@ export class ApiError extends Error {
   }
 }
 
-async function parseErrorBody(response: Response): Promise<ErrorEnvelope | null> {
-  try {
-    const json = await response.clone().json()
-    const result = ErrorEnvelopeSchema.safeParse(json)
-    return result.success ? result.data : null
-  } catch {
-    return null
-  }
-}
-
-/** Lança ApiError se a resposta não for OK. Usar sempre com o `response` bruto devolvido pelo cliente openapi-fetch. */
-export async function throwIfError(response: Response): Promise<void> {
-  if (response.ok) return
-  const body = await parseErrorBody(response)
-  throw new ApiError(response.status, body)
+/**
+ * Constrói ApiError a partir do `error` já parseado pelo openapi-fetch. Precisa
+ * receber o `error` (não o `response` bruto): o openapi-fetch lê o corpo da
+ * resposta internamente para popular `data`/`error`, então `response.clone()`
+ * depois disso falha com "Response body is already used" — não há como reler o
+ * corpo aqui.
+ */
+export function apiErrorFrom(status: number, error: unknown): ApiError {
+  const result = ErrorEnvelopeSchema.safeParse(error)
+  return new ApiError(status, result.success ? result.data : null)
 }
 
 /** Extrai `data` de uma chamada openapi-fetch, lançando ApiError em caso de falha. */
 export async function unwrap<T>(
-  call: Promise<{ data?: T; response: Response }>,
+  call: Promise<{ data?: T; error?: unknown; response: Response }>,
 ): Promise<T> {
-  const { data, response } = await call
-  await throwIfError(response)
+  const { data, error, response } = await call
+  if (error !== undefined) throw apiErrorFrom(response.status, error)
   return data as T
 }

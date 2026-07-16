@@ -8,6 +8,9 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useChangePassword } from "@/features/profile/api"
 import { changePasswordSchema, type ChangePasswordFormValues } from "@/features/profile/schemas"
 import { ApiError } from "@/lib/api/errors"
+import { applyServerFieldErrors } from "@/lib/api/form-errors"
+
+const FIELD_MAP = { current_password: "currentPassword", new_password: "newPassword" } as const
 
 export function ChangePasswordSection() {
   const changePasswordMutation = useChangePassword()
@@ -23,6 +26,7 @@ export function ChangePasswordSection() {
       toast.success("Senha alterada. Enviamos um alerta de segurança para seu e-mail.")
       form.reset()
     } catch (err) {
+      if (applyServerFieldErrors(form, err, FIELD_MAP)) return
       const message = err instanceof ApiError ? err.message : "Não foi possível alterar a senha."
       toast.error(message)
     }

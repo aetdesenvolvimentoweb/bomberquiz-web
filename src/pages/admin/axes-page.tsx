@@ -26,7 +26,7 @@ import { ApiError } from "@/lib/api/errors"
 const PAGE_SIZE = 20
 
 export function AxesPage() {
-  const [status, setStatus] = useState<AxisStatusFilter>("active")
+  const [status, setStatus] = useState<AxisStatusFilter>("all")
   const [q, setQ] = useState("")
   const [page, setPage] = useState(1)
   const [dialogState, setDialogState] = useState<
@@ -75,9 +75,9 @@ export function AxesPage() {
             setPage(1)
           }}
         >
+          <option value="all">Todos</option>
           <option value="active">Ativos</option>
           <option value="archived">Desativados</option>
-          <option value="all">Todos</option>
         </select>
       </div>
 

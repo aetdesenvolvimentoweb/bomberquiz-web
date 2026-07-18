@@ -39,6 +39,22 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        gold: {
+          DEFAULT: "hsl(var(--gold))",
+          foreground: "hsl(var(--gold-foreground))",
+        },
+        flame: {
+          DEFAULT: "hsl(var(--flame))",
+          foreground: "hsl(var(--flame-foreground))",
+        },
+        ember: {
+          DEFAULT: "hsl(var(--ember))",
+          foreground: "hsl(var(--ember-foreground))",
+        },
+        success: {
+          DEFAULT: "hsl(var(--success))",
+          foreground: "hsl(var(--success-foreground))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",

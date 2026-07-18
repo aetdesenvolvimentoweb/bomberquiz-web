@@ -1,27 +1,31 @@
-import { Link } from "react-router-dom"
-import { Button } from "@/components/ui/button"
-import { useSession } from "@/features/session/use-session"
-import { useLogout } from "@/features/auth/api"
-import { getInitials } from "@/lib/initials"
-import { PersonalInfoSection } from "./personal-info-section"
-import { ChangePasswordSection } from "./change-password-section"
-import { ChangeEmailSection } from "./change-email-section"
-import { DangerZoneSection } from "./danger-zone-section"
+import { Button } from "@/components/ui/button";
+import { useLogout } from "@/features/auth/api";
+import { useSession } from "@/features/session/use-session";
+import { getInitials } from "@/lib/initials";
+import { Link } from "react-router-dom";
+import { ChangeEmailSection } from "./change-email-section";
+import { ChangePasswordSection } from "./change-password-section";
+import { DangerZoneSection } from "./danger-zone-section";
+import { PersonalInfoSection } from "./personal-info-section";
 
 export function ProfilePage() {
-  const { user } = useSession()
-  const logoutMutation = useLogout()
+  const { user } = useSession();
+  const logoutMutation = useLogout();
 
-  if (!user) return null
+  if (!user) return null;
 
   return (
     <div className="mx-auto max-w-2xl space-y-6 px-4 py-10">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           {user.avatarUrl ? (
-            <img src={user.avatarUrl} alt={user.name} className="h-12 w-12 rounded-full object-cover" />
+            <img
+              src={user.avatarUrl}
+              alt={user.name}
+              className="h-12 w-12 rounded-full object-cover"
+            />
           ) : (
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-ember text-ember-foreground">
               {getInitials(user.name)}
             </div>
           )}
@@ -34,7 +38,11 @@ export function ProfilePage() {
           <Button asChild variant="ghost">
             <Link to="/inicio">Voltar</Link>
           </Button>
-          <Button variant="outline" onClick={() => logoutMutation.mutate()} loading={logoutMutation.isPending}>
+          <Button
+            variant="outline"
+            onClick={() => logoutMutation.mutate()}
+            loading={logoutMutation.isPending}
+          >
             {logoutMutation.isPending ? "Saindo…" : "Sair"}
           </Button>
         </div>
@@ -45,5 +53,5 @@ export function ProfilePage() {
       <ChangePasswordSection />
       <DangerZoneSection />
     </div>
-  )
+  );
 }

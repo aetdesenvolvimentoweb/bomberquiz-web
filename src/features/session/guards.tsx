@@ -39,3 +39,14 @@ export function ConsentGate() {
 
   return <Outlet />
 }
+
+/** Bloqueia rotas /admin/* para quem não tem role="admin" (Módulo 3 — Conteúdo). */
+export function RequireAdmin() {
+  const { user, isPending, isError, refetch } = useSession()
+
+  if (isPending) return <LoadingScreen />
+  if (isError) return <SessionErrorScreen onRetry={refetch} />
+  if (user?.role !== "admin") return <Navigate to="/inicio" replace />
+
+  return <Outlet />
+}

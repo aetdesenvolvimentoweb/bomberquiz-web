@@ -1,5 +1,5 @@
 import { createBrowserRouter, Outlet } from "react-router-dom"
-import { RequireAuth, RequireGuest, ConsentGate } from "@/features/session/guards"
+import { RequireAuth, RequireGuest, ConsentGate, RequireAdmin } from "@/features/session/guards"
 import { RouteErrorBoundary } from "@/components/route-error-boundary"
 import { RegisterPage } from "@/pages/auth/register-page"
 import { LoginPage } from "@/pages/auth/login-page"
@@ -14,6 +14,7 @@ import { TermsPage } from "@/pages/legal/terms-page"
 import { PrivacyPage } from "@/pages/legal/privacy-page"
 import { HomePage } from "@/pages/home-page"
 import { IndexRedirectPage } from "@/pages/index-redirect-page"
+import { AxesPage } from "@/pages/admin/axes-page"
 
 export const router = createBrowserRouter([
   {
@@ -48,6 +49,10 @@ export const router = createBrowserRouter([
               { path: "/inicio", element: <HomePage /> },
               { path: "/perfil", element: <ProfilePage /> },
               { path: "/perfil/email/confirmar", element: <EmailConfirmPage /> },
+              {
+                element: <RequireAdmin />,
+                children: [{ path: "/painel/eixos", element: <AxesPage /> }],
+              },
             ],
           },
         ],

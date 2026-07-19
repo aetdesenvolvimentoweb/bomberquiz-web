@@ -15,6 +15,7 @@ import { PrivacyPage } from "@/pages/legal/privacy-page"
 import { HomePage } from "@/pages/home-page"
 import { IndexRedirectPage } from "@/pages/index-redirect-page"
 import { AxesPage } from "@/pages/admin/axes-page"
+import { SubjectsPage } from "@/pages/admin/subjects-page"
 
 export const router = createBrowserRouter([
   {
@@ -51,7 +52,10 @@ export const router = createBrowserRouter([
               { path: "/perfil/email/confirmar", element: <EmailConfirmPage /> },
               {
                 element: <RequireAdmin />,
-                children: [{ path: "/painel/eixos", element: <AxesPage /> }],
+                children: [
+                  { path: "/painel/eixos", element: <AxesPage /> },
+                  { path: "/painel/materias", element: <SubjectsPage /> },
+                ],
               },
             ],
           },

@@ -19,45 +19,56 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination"
-import { useArchiveAxis, useAxes, type AxisStatusFilter } from "@/features/content/axes-api"
-import { AxisFormDialog } from "./axis-form-dialog"
+import { useAxes } from "@/features/content/axes-api"
+import { useArchiveSubject, useSubjects, type SubjectStatusFilter } from "@/features/content/subjects-api"
+import { SubjectFormDialog } from "./subject-form-dialog"
 import { ApiError } from "@/lib/api/errors"
 
 const PAGE_SIZE = 20
 
-export function AxesPage() {
-  const [status, setStatus] = useState<AxisStatusFilter>("all")
+export function SubjectsPage() {
+  const [axisId, setAxisId] = useState<string>("all")
+  const [status, setStatus] = useState<SubjectStatusFilter>("all")
   const [q, setQ] = useState("")
   const [page, setPage] = useState(1)
   const [dialogState, setDialogState] = useState<
     | { open: false }
-    | { open: true; axis?: { id: string; name: string; description: string | null; tapWeight: number } }
+    | {
+        open: true
+        subject?: { id: string; axisId: string; name: string; officialSource: string | null }
+      }
   >({ open: false })
 
-  const { data, isPending, isError } = useAxes({ status, q: q || undefined, page, pageSize: PAGE_SIZE })
-  const archiveMutation = useArchiveAxis()
+  const { data: axesData } = useAxes({ status: "all", page: 1, pageSize: 100 })
+  const { data, isPending, isError } = useSubjects({
+    axisId: axisId === "all" ? undefined : axisId,
+    status,
+    q: q || undefined,
+    page,
+    pageSize: PAGE_SIZE,
+  })
+  const archiveMutation = useArchiveSubject()
 
   async function handleToggleArchive(id: string) {
     try {
-      const result = await archiveMutation.mutateAsync(id)
-      // CONT-RF-004 CA-2: arquivar eixo com matérias ativas avisa, mas não bloqueia.
-      if (result.warning) toast.warning(result.warning)
+      await archiveMutation.mutateAsync(id)
     } catch (err) {
-      const message = err instanceof ApiError ? err.message : "Não foi possível alterar o status do eixo."
+      const message = err instanceof ApiError ? err.message : "Não foi possível alterar o status da matéria."
       toast.error(message)
     }
   }
 
   const totalPages = data ? Math.max(1, Math.ceil(data.total / PAGE_SIZE)) : 1
+  const axisOptions = axesData?.items ?? []
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6 p-6">
+    <div className="mx-auto max-w-6xl space-y-6 p-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold">Eixos temáticos</h1>
-          <p className="text-sm text-muted-foreground">Agrupamentos de matérias do TAP.</p>
+          <h1 className="text-2xl font-semibold">Matérias</h1>
+          <p className="text-sm text-muted-foreground">Matérias vinculadas aos eixos temáticos do TAP.</p>
         </div>
-        <Button onClick={() => setDialogState({ open: true })}>Novo eixo</Button>
+        <Button onClick={() => setDialogState({ open: true })}>Nova matéria</Button>
       </div>
 
       <div className="flex flex-wrap gap-3">
@@ -72,15 +83,30 @@ export function AxesPage() {
         />
         <select
           className="flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          value={axisId}
+          onChange={(e) => {
+            setAxisId(e.target.value)
+            setPage(1)
+          }}
+        >
+          <option value="all">Todos os eixos</option>
+          {axisOptions.map((axis) => (
+            <option key={axis.id} value={axis.id}>
+              {axis.name}
+            </option>
+          ))}
+        </select>
+        <select
+          className="flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           value={status}
           onChange={(e) => {
-            setStatus(e.target.value as AxisStatusFilter)
+            setStatus(e.target.value as SubjectStatusFilter)
             setPage(1)
           }}
         >
           <option value="all">Todos</option>
-          <option value="active">Ativos</option>
-          <option value="archived">Desativados</option>
+          <option value="active">Ativas</option>
+          <option value="archived">Desativadas</option>
         </select>
       </div>
 
@@ -90,7 +116,7 @@ export function AxesPage() {
         </div>
       )}
 
-      {isError && <p className="text-sm text-destructive">Não foi possível carregar os eixos.</p>}
+      {isError && <p className="text-sm text-destructive">Não foi possível carregar as matérias.</p>}
 
       {data && (
         <>
@@ -98,10 +124,10 @@ export function AxesPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Nome</TableHead>
-                <TableHead>Descrição</TableHead>
-                <TableHead>Peso TAP</TableHead>
+                <TableHead>Eixo</TableHead>
+                <TableHead>Fonte oficial</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Matérias</TableHead>
+                <TableHead>Perguntas</TableHead>
                 <TableHead className="text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
@@ -109,21 +135,21 @@ export function AxesPage() {
               {data.items.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={6} className="text-center text-sm text-muted-foreground">
-                    Nenhum eixo encontrado.
+                    Nenhuma matéria encontrada.
                   </TableCell>
                 </TableRow>
               )}
-              {data.items.map((axis) => (
-                <TableRow key={axis.id}>
-                  <TableCell className="font-medium">{axis.name}</TableCell>
-                  <TableCell className="text-muted-foreground">{axis.description ?? "—"}</TableCell>
-                  <TableCell>{axis.tap_weight}</TableCell>
+              {data.items.map((subject) => (
+                <TableRow key={subject.id}>
+                  <TableCell className="font-medium">{subject.name}</TableCell>
+                  <TableCell className="text-muted-foreground">{subject.axis_name}</TableCell>
+                  <TableCell className="text-muted-foreground">{subject.official_source ?? "—"}</TableCell>
                   <TableCell>
-                    <Badge variant={axis.status === "active" ? "success" : "secondary"}>
-                      {axis.status === "active" ? "Ativo" : "Desativado"}
+                    <Badge variant={subject.status === "active" ? "success" : "secondary"}>
+                      {subject.status === "active" ? "Ativa" : "Desativada"}
                     </Badge>
                   </TableCell>
-                  <TableCell>{axis.subjects_count}</TableCell>
+                  <TableCell>{subject.questions_count}</TableCell>
                   <TableCell className="flex justify-end gap-2">
                     <Button
                       variant="outline"
@@ -131,11 +157,11 @@ export function AxesPage() {
                       onClick={() =>
                         setDialogState({
                           open: true,
-                          axis: {
-                            id: axis.id,
-                            name: axis.name,
-                            description: axis.description,
-                            tapWeight: axis.tap_weight,
+                          subject: {
+                            id: subject.id,
+                            axisId: subject.axis_id,
+                            name: subject.name,
+                            officialSource: subject.official_source,
                           },
                         })
                       }
@@ -146,9 +172,9 @@ export function AxesPage() {
                       variant="outline"
                       size="sm"
                       loading={archiveMutation.isPending}
-                      onClick={() => handleToggleArchive(axis.id)}
+                      onClick={() => handleToggleArchive(subject.id)}
                     >
-                      {axis.status === "active" ? "Desativar eixo" : "Reativar eixo"}
+                      {subject.status === "active" ? "Desativar matéria" : "Reativar matéria"}
                     </Button>
                   </TableCell>
                 </TableRow>
@@ -185,10 +211,11 @@ export function AxesPage() {
       )}
 
       {dialogState.open && (
-        <AxisFormDialog
+        <SubjectFormDialog
           open={dialogState.open}
           onOpenChange={(open) => setDialogState(open ? dialogState : { open: false })}
-          axis={dialogState.axis}
+          subject={dialogState.subject}
+          defaultAxisId={axisId === "all" ? undefined : axisId}
         />
       )}
     </div>

@@ -21,7 +21,7 @@ import { applyServerFieldErrors } from "@/lib/api/form-errors"
 export interface AxisFormDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  axis?: { id: string; name: string; description: string | null }
+  axis?: { id: string; name: string; description: string | null; tapWeight: number }
 }
 
 /** Diálogo compartilhado por criação e edição de eixo temático (CONT-RF-002/003). */
@@ -33,12 +33,22 @@ export function AxisFormDialog({ open, onOpenChange, axis }: AxisFormDialogProps
 
   const form = useForm<AxisFormValues>({
     resolver: zodResolver(axisFormSchema),
-    defaultValues: { name: axis?.name ?? "", description: axis?.description ?? "" },
+    defaultValues: {
+      name: axis?.name ?? "",
+      description: axis?.description ?? "",
+      tapWeight: axis?.tapWeight ?? 0,
+    },
   })
 
   // Reseta o formulário quando o diálogo é reaberto para um eixo diferente (ou para criar).
   useEffect(() => {
-    if (open) form.reset({ name: axis?.name ?? "", description: axis?.description ?? "" })
+    if (open) {
+      form.reset({
+        name: axis?.name ?? "",
+        description: axis?.description ?? "",
+        tapWeight: axis?.tapWeight ?? 0,
+      })
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, axis?.id])
 
@@ -93,6 +103,20 @@ export function AxisFormDialog({ open, onOpenChange, axis }: AxisFormDialogProps
                   <FormLabel>Descrição (opcional)</FormLabel>
                   <FormControl>
                     <Input {...field} placeholder="Ex.: Agrupa matérias de resgate e emergência" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="tapWeight"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Peso no TAP</FormLabel>
+                  <FormControl>
+                    <Input {...field} type="number" min={0} step={1} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

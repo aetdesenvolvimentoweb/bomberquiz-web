@@ -279,6 +279,58 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/subjects": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Listar matérias */
+        get: operations["listSubjects"];
+        put?: never;
+        /** Criar matéria */
+        post: operations["createSubject"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/subjects/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Editar matéria */
+        patch: operations["updateSubject"];
+        trace?: never;
+    };
+    "/admin/subjects/{id}/archive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Arquivar / desarquivar matéria */
+        post: operations["archiveSubject"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -859,6 +911,7 @@ export interface operations {
                             id: string;
                             name: string;
                             description: string | null;
+                            tap_weight: number;
                             /** @enum {string} */
                             status: "active" | "archived";
                             subjects_count: number;
@@ -899,6 +952,7 @@ export interface operations {
                 "application/json": {
                     name: string;
                     description?: string;
+                    tap_weight: number;
                 };
             };
         };
@@ -913,6 +967,7 @@ export interface operations {
                         id: string;
                         name: string;
                         description: string | null;
+                        tap_weight: number;
                         /** @enum {string} */
                         status: "active" | "archived";
                         subjects_count: number;
@@ -951,6 +1006,7 @@ export interface operations {
                 "application/json": {
                     name?: string;
                     description?: string;
+                    tap_weight?: number;
                 };
             };
         };
@@ -965,6 +1021,7 @@ export interface operations {
                         id: string;
                         name: string;
                         description: string | null;
+                        tap_weight: number;
                         /** @enum {string} */
                         status: "active" | "archived";
                         subjects_count: number;
@@ -1017,15 +1074,229 @@ export interface operations {
                         id: string;
                         name: string;
                         description: string | null;
+                        tap_weight: number;
                         /** @enum {string} */
                         status: "active" | "archived";
                         subjects_count: number;
                         created_at: string;
                         archived_at: string | null;
+                        warning: string | null;
                     };
                 };
             };
             /** @description Eixo não encontrado */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    listSubjects: {
+        parameters: {
+            query?: {
+                page?: number;
+                page_size?: number;
+                axis_id?: string;
+                status?: "active" | "archived" | "all";
+                q?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Lista paginada de matérias */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: {
+                            id: string;
+                            axis_id: string;
+                            axis_name: string;
+                            name: string;
+                            official_source: string | null;
+                            /** @enum {string} */
+                            status: "active" | "archived";
+                            questions_count: number;
+                            created_at: string;
+                            archived_at: string | null;
+                        }[];
+                        page: number;
+                        page_size: number;
+                        total: number;
+                    };
+                };
+            };
+            /** @description Não autenticado */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Acesso restrito a administradores */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    createSubject: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    axis_id: string;
+                    name: string;
+                    official_source?: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Matéria criada */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        id: string;
+                        axis_id: string;
+                        axis_name: string;
+                        name: string;
+                        official_source: string | null;
+                        /** @enum {string} */
+                        status: "active" | "archived";
+                        questions_count: number;
+                        created_at: string;
+                        archived_at: string | null;
+                    };
+                };
+            };
+            /** @description Nome já em uso no eixo */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Dados inválidos ou eixo inexistente/arquivado */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    updateSubject: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    axis_id?: string;
+                    name?: string;
+                    official_source?: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Matéria atualizada */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        id: string;
+                        axis_id: string;
+                        axis_name: string;
+                        name: string;
+                        official_source: string | null;
+                        /** @enum {string} */
+                        status: "active" | "archived";
+                        questions_count: number;
+                        created_at: string;
+                        archived_at: string | null;
+                    };
+                };
+            };
+            /** @description Matéria não encontrada ou arquivada */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Nome já em uso no eixo */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Dados inválidos ou eixo destino inexistente/arquivado */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    archiveSubject: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Status alternado */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        id: string;
+                        axis_id: string;
+                        axis_name: string;
+                        name: string;
+                        official_source: string | null;
+                        /** @enum {string} */
+                        status: "active" | "archived";
+                        questions_count: number;
+                        created_at: string;
+                        archived_at: string | null;
+                        warning: string | null;
+                    };
+                };
+            };
+            /** @description Matéria não encontrada */
             404: {
                 headers: {
                     [name: string]: unknown;

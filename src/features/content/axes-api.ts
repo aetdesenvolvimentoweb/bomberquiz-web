@@ -14,6 +14,14 @@ export interface AxesFilters {
 
 const AXES_QUERY_KEY = ["content", "axes"] as const
 
+function toBody(values: AxisFormValues) {
+  return {
+    name: values.name,
+    description: values.description,
+    tap_weight: values.tapWeight,
+  }
+}
+
 export function useAxes(filters: AxesFilters) {
   return useQuery({
     queryKey: [...AXES_QUERY_KEY, filters],
@@ -30,7 +38,7 @@ export function useCreateAxis() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (values: AxisFormValues) => unwrap(apiClient.POST("/admin/axes", { body: values })),
+    mutationFn: (values: AxisFormValues) => unwrap(apiClient.POST("/admin/axes", { body: toBody(values) })),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: AXES_QUERY_KEY })
     },
@@ -42,7 +50,7 @@ export function useUpdateAxis() {
 
   return useMutation({
     mutationFn: ({ id, values }: { id: string; values: AxisFormValues }) =>
-      unwrap(apiClient.PATCH("/admin/axes/{id}", { params: { path: { id } }, body: values })),
+      unwrap(apiClient.PATCH("/admin/axes/{id}", { params: { path: { id } }, body: toBody(values) })),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: AXES_QUERY_KEY })
     },

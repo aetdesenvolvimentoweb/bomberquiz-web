@@ -44,6 +44,7 @@ const axisA = {
   id: "axis-1",
   name: "Salvamento",
   description: "Eixo de salvamento",
+  tap_weight: 9,
   status: "active" as const,
   subjects_count: 2,
   created_at: "2026-01-01T00:00:00.000Z",
@@ -89,11 +90,13 @@ describe("AxesPage", () => {
 
     const dialog = await screen.findByRole("dialog")
     await user.type(within(dialog).getByLabelText("Nome"), "Salvamento")
+    await user.clear(within(dialog).getByLabelText("Peso no TAP"))
+    await user.type(within(dialog).getByLabelText("Peso no TAP"), "9")
     await user.click(within(dialog).getByRole("button", { name: "Salvar" }))
 
     await waitFor(() => expect(apiClient.POST).toHaveBeenCalledWith(
       "/admin/axes",
-      expect.objectContaining({ body: expect.objectContaining({ name: "Salvamento" }) }),
+      expect.objectContaining({ body: expect.objectContaining({ name: "Salvamento", tap_weight: 9 }) }),
     ))
   })
 

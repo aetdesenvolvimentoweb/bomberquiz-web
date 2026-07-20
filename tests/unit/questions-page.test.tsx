@@ -148,7 +148,7 @@ describe("QuestionsPage", () => {
       expect(apiClient.POST).toHaveBeenCalledWith(
         "/admin/questions",
         expect.objectContaining({
-          params: { query: { as_draft: false } },
+          params: { query: { as_draft: "false" } },
           body: expect.objectContaining({ subject_id: "subject-1", correct_index: 0 }),
         }),
       ),

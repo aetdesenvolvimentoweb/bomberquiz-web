@@ -18,6 +18,7 @@ import { AxesPage } from "@/pages/admin/axes-page"
 import { SubjectsPage } from "@/pages/admin/subjects-page"
 import { QuestionsPage } from "@/pages/admin/questions-page"
 import { ReviewQueuePage } from "@/pages/admin/review-queue-page"
+import { PanelLayout } from "@/components/panel-layout"
 
 export const router = createBrowserRouter([
   {
@@ -55,10 +56,15 @@ export const router = createBrowserRouter([
               {
                 element: <RequireAdmin />,
                 children: [
-                  { path: "/painel/eixos", element: <AxesPage /> },
-                  { path: "/painel/materias", element: <SubjectsPage /> },
-                  { path: "/painel/perguntas", element: <QuestionsPage /> },
-                  { path: "/painel/revisao", element: <ReviewQueuePage /> },
+                  {
+                    element: <PanelLayout />,
+                    children: [
+                      { path: "/painel/eixos", element: <AxesPage /> },
+                      { path: "/painel/materias", element: <SubjectsPage /> },
+                      { path: "/painel/perguntas", element: <QuestionsPage /> },
+                      { path: "/painel/revisao", element: <ReviewQueuePage /> },
+                    ],
+                  },
                 ],
               },
             ],

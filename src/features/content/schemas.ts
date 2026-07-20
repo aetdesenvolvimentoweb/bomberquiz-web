@@ -17,3 +17,23 @@ export const subjectFormSchema = z.object({
 })
 
 export type SubjectFormValues = z.infer<typeof subjectFormSchema>
+
+// Espelha as regras gerais de CONT-RF-009 a 013 (espec/docs/rf/content-admin.md).
+export const questionFormSchema = z
+  .object({
+    subjectId: z.string().min(1, "Selecione uma matéria"),
+    statement: z.string().min(10, "Enunciado deve ter ao menos 10 caracteres").max(2000, "Enunciado deve ter no máximo 2.000 caracteres"),
+    alternatives: z
+      .array(z.string().min(1, "Alternativa não pode ser vazia").max(500, "Alternativa deve ter no máximo 500 caracteres"))
+      .length(4),
+    correctIndex: z.coerce.number().int().min(0).max(3),
+    explanation: z.string().min(10, "Justificativa deve ter ao menos 10 caracteres").max(2000, "Justificativa deve ter no máximo 2.000 caracteres"),
+    sourceReference: z.string().max(240, "Fonte deve ter no máximo 240 caracteres").optional(),
+    resetStats: z.boolean().optional(),
+  })
+  .refine(
+    (values) => new Set(values.alternatives.map((a) => a.trim())).size === values.alternatives.length,
+    { message: "Alternativas não podem ser duplicadas", path: ["alternatives"] },
+  )
+
+export type QuestionFormValues = z.infer<typeof questionFormSchema>

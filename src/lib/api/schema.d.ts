@@ -331,6 +331,60 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/questions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Listar perguntas */
+        get: operations["listQuestions"];
+        put?: never;
+        /** Criar pergunta */
+        post: operations["createQuestion"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/questions/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Detalhe completo da pergunta */
+        get: operations["getQuestion"];
+        put?: never;
+        post?: never;
+        /** Excluir definitivamente pergunta (hard-delete, só sem respostas) */
+        delete: operations["deleteQuestion"];
+        options?: never;
+        head?: never;
+        /** Editar pergunta */
+        patch: operations["updateQuestion"];
+        trace?: never;
+    };
+    "/admin/questions/{id}/archive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Arquivar / desarquivar pergunta */
+        post: operations["archiveQuestion"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1297,6 +1351,347 @@ export interface operations {
                 };
             };
             /** @description Matéria não encontrada */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    listQuestions: {
+        parameters: {
+            query?: {
+                page?: number;
+                page_size?: number;
+                subject_id?: string;
+                axis_id?: string;
+                status?: string;
+                author_id?: string;
+                q?: string;
+                has_image?: boolean | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Lista paginada de perguntas */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: {
+                            id: string;
+                            subject_id: string;
+                            subject_name: string;
+                            axis_name: string;
+                            statement_preview: string;
+                            /** @enum {string} */
+                            status: "draft" | "pending_review" | "published" | "archived";
+                            author_id: string;
+                            author_name: string;
+                            has_image: boolean;
+                            created_at: string;
+                            published_at: string | null;
+                            archived_at: string | null;
+                            total_answers: number;
+                            accuracy: number;
+                        }[];
+                        page: number;
+                        page_size: number;
+                        total: number;
+                    };
+                };
+            };
+            /** @description Não autenticado */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Acesso restrito a administradores */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    createQuestion: {
+        parameters: {
+            query?: {
+                as_draft?: boolean | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    subject_id: string;
+                    statement: string;
+                    alternatives: string[];
+                    correct_index: number;
+                    explanation: string;
+                    source_reference?: string;
+                    image_url?: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Pergunta criada */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        id: string;
+                        subject_id: string;
+                        subject_name: string;
+                        axis_name: string;
+                        statement: string;
+                        alternatives: string[];
+                        correct_index: number;
+                        explanation: string;
+                        source_reference: string | null;
+                        image_url: string | null;
+                        /** @enum {string} */
+                        status: "draft" | "pending_review" | "published" | "archived";
+                        author_id: string;
+                        author_name: string;
+                        created_at: string;
+                        updated_at: string;
+                        published_at: string | null;
+                        archived_at: string | null;
+                        stats_reset_at: string | null;
+                        total_answers: number;
+                        accuracy: number;
+                    };
+                };
+            };
+            /** @description Dados inválidos ou matéria inexistente/arquivada */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    getQuestion: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Pergunta */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        id: string;
+                        subject_id: string;
+                        subject_name: string;
+                        axis_name: string;
+                        statement: string;
+                        alternatives: string[];
+                        correct_index: number;
+                        explanation: string;
+                        source_reference: string | null;
+                        image_url: string | null;
+                        /** @enum {string} */
+                        status: "draft" | "pending_review" | "published" | "archived";
+                        author_id: string;
+                        author_name: string;
+                        created_at: string;
+                        updated_at: string;
+                        published_at: string | null;
+                        archived_at: string | null;
+                        stats_reset_at: string | null;
+                        total_answers: number;
+                        accuracy: number;
+                    };
+                };
+            };
+            /** @description Pergunta não encontrada */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    deleteQuestion: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Pergunta excluída */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Pergunta não encontrada */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Pergunta já respondida — arquive em vez de excluir */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    updateQuestion: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    subject_id?: string;
+                    statement?: string;
+                    alternatives?: string[];
+                    correct_index?: number;
+                    explanation?: string;
+                    source_reference?: string;
+                    image_url?: string;
+                    reset_stats?: boolean;
+                };
+            };
+        };
+        responses: {
+            /** @description Pergunta atualizada */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        id: string;
+                        subject_id: string;
+                        subject_name: string;
+                        axis_name: string;
+                        statement: string;
+                        alternatives: string[];
+                        correct_index: number;
+                        explanation: string;
+                        source_reference: string | null;
+                        image_url: string | null;
+                        /** @enum {string} */
+                        status: "draft" | "pending_review" | "published" | "archived";
+                        author_id: string;
+                        author_name: string;
+                        created_at: string;
+                        updated_at: string;
+                        published_at: string | null;
+                        archived_at: string | null;
+                        stats_reset_at: string | null;
+                        total_answers: number;
+                        accuracy: number;
+                    };
+                };
+            };
+            /** @description Pergunta não encontrada */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Pergunta arquivada */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Dados inválidos ou matéria destino inexistente/arquivada */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    archiveQuestion: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Status alternado */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        id: string;
+                        subject_id: string;
+                        subject_name: string;
+                        axis_name: string;
+                        statement: string;
+                        alternatives: string[];
+                        correct_index: number;
+                        explanation: string;
+                        source_reference: string | null;
+                        image_url: string | null;
+                        /** @enum {string} */
+                        status: "draft" | "pending_review" | "published" | "archived";
+                        author_id: string;
+                        author_name: string;
+                        created_at: string;
+                        updated_at: string;
+                        published_at: string | null;
+                        archived_at: string | null;
+                        stats_reset_at: string | null;
+                        total_answers: number;
+                        accuracy: number;
+                    };
+                };
+            };
+            /** @description Pergunta não encontrada */
             404: {
                 headers: {
                     [name: string]: unknown;

@@ -16,6 +16,7 @@ import { HomePage } from "@/pages/home-page"
 import { IndexRedirectPage } from "@/pages/index-redirect-page"
 import { AxesPage } from "@/pages/admin/axes-page"
 import { SubjectsPage } from "@/pages/admin/subjects-page"
+import { QuestionsPage } from "@/pages/admin/questions-page"
 
 export const router = createBrowserRouter([
   {
@@ -55,6 +56,7 @@ export const router = createBrowserRouter([
                 children: [
                   { path: "/painel/eixos", element: <AxesPage /> },
                   { path: "/painel/materias", element: <SubjectsPage /> },
+                  { path: "/painel/perguntas", element: <QuestionsPage /> },
                 ],
               },
             ],

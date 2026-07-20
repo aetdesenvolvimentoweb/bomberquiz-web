@@ -17,6 +17,7 @@ import { IndexRedirectPage } from "@/pages/index-redirect-page"
 import { AxesPage } from "@/pages/admin/axes-page"
 import { SubjectsPage } from "@/pages/admin/subjects-page"
 import { QuestionsPage } from "@/pages/admin/questions-page"
+import { ReviewQueuePage } from "@/pages/admin/review-queue-page"
 
 export const router = createBrowserRouter([
   {
@@ -57,6 +58,7 @@ export const router = createBrowserRouter([
                   { path: "/painel/eixos", element: <AxesPage /> },
                   { path: "/painel/materias", element: <SubjectsPage /> },
                   { path: "/painel/perguntas", element: <QuestionsPage /> },
+                  { path: "/painel/revisao", element: <ReviewQueuePage /> },
                 ],
               },
             ],

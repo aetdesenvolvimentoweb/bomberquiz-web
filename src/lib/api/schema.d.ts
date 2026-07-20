@@ -349,6 +349,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/questions/pending": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Fila de revisão — perguntas pendentes (FIFO) */
+        get: operations["listPendingQuestions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/questions/{id}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Aprovar pergunta de parceiro (publica) */
+        post: operations["approveQuestion"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/questions/{id}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Rejeitar pergunta de parceiro (volta para rascunho) */
+        post: operations["rejectQuestion"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/questions/{id}": {
         parameters: {
             query?: never;
@@ -1369,7 +1420,7 @@ export interface operations {
                 status?: string;
                 author_id?: string;
                 q?: string;
-                has_image?: boolean | null;
+                has_image?: "true" | "false";
             };
             header?: never;
             path?: never;
@@ -1426,7 +1477,7 @@ export interface operations {
     createQuestion: {
         parameters: {
             query?: {
-                as_draft?: boolean | null;
+                as_draft?: "true" | "false";
             };
             header?: never;
             path?: never;
@@ -1472,12 +1523,217 @@ export interface operations {
                         published_at: string | null;
                         archived_at: string | null;
                         stats_reset_at: string | null;
+                        reviewed_by: string | null;
+                        reviewed_at: string | null;
+                        rejection_reason: string | null;
                         total_answers: number;
                         accuracy: number;
                     };
                 };
             };
             /** @description Dados inválidos ou matéria inexistente/arquivada */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    listPendingQuestions: {
+        parameters: {
+            query?: {
+                page?: number;
+                page_size?: number;
+                author_id?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Lista paginada de perguntas pendentes */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: {
+                            id: string;
+                            subject_id: string;
+                            subject_name: string;
+                            axis_name: string;
+                            statement_preview: string;
+                            /** @enum {string} */
+                            status: "draft" | "pending_review" | "published" | "archived";
+                            author_id: string;
+                            author_name: string;
+                            has_image: boolean;
+                            created_at: string;
+                            published_at: string | null;
+                            archived_at: string | null;
+                            total_answers: number;
+                            accuracy: number;
+                            submitted_at: string;
+                            partner_pending_count: number;
+                        }[];
+                        page: number;
+                        page_size: number;
+                        total: number;
+                    };
+                };
+            };
+            /** @description Não autenticado */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Acesso restrito a administradores */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    approveQuestion: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    notes?: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Pergunta aprovada e publicada */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        id: string;
+                        subject_id: string;
+                        subject_name: string;
+                        axis_name: string;
+                        statement: string;
+                        alternatives: string[];
+                        correct_index: number;
+                        explanation: string;
+                        source_reference: string | null;
+                        image_url: string | null;
+                        /** @enum {string} */
+                        status: "draft" | "pending_review" | "published" | "archived";
+                        author_id: string;
+                        author_name: string;
+                        created_at: string;
+                        updated_at: string;
+                        published_at: string | null;
+                        archived_at: string | null;
+                        stats_reset_at: string | null;
+                        reviewed_by: string | null;
+                        reviewed_at: string | null;
+                        rejection_reason: string | null;
+                        total_answers: number;
+                        accuracy: number;
+                    };
+                };
+            };
+            /** @description Pergunta não encontrada */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Pergunta não está aguardando revisão */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    rejectQuestion: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    reason: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Pergunta rejeitada */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        id: string;
+                        subject_id: string;
+                        subject_name: string;
+                        axis_name: string;
+                        statement: string;
+                        alternatives: string[];
+                        correct_index: number;
+                        explanation: string;
+                        source_reference: string | null;
+                        image_url: string | null;
+                        /** @enum {string} */
+                        status: "draft" | "pending_review" | "published" | "archived";
+                        author_id: string;
+                        author_name: string;
+                        created_at: string;
+                        updated_at: string;
+                        published_at: string | null;
+                        archived_at: string | null;
+                        stats_reset_at: string | null;
+                        reviewed_by: string | null;
+                        reviewed_at: string | null;
+                        rejection_reason: string | null;
+                        total_answers: number;
+                        accuracy: number;
+                    };
+                };
+            };
+            /** @description Pergunta não encontrada */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Pergunta não está aguardando revisão */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Motivo ausente ou abaixo do mínimo */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -1523,6 +1779,9 @@ export interface operations {
                         published_at: string | null;
                         archived_at: string | null;
                         stats_reset_at: string | null;
+                        reviewed_by: string | null;
+                        reviewed_at: string | null;
+                        rejection_reason: string | null;
                         total_answers: number;
                         accuracy: number;
                     };
@@ -1621,6 +1880,9 @@ export interface operations {
                         published_at: string | null;
                         archived_at: string | null;
                         stats_reset_at: string | null;
+                        reviewed_by: string | null;
+                        reviewed_at: string | null;
+                        rejection_reason: string | null;
                         total_answers: number;
                         accuracy: number;
                     };
@@ -1686,6 +1948,9 @@ export interface operations {
                         published_at: string | null;
                         archived_at: string | null;
                         stats_reset_at: string | null;
+                        reviewed_by: string | null;
+                        reviewed_at: string | null;
+                        rejection_reason: string | null;
                         total_answers: number;
                         accuracy: number;
                     };

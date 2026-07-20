@@ -37,3 +37,10 @@ export const questionFormSchema = z
   )
 
 export type QuestionFormValues = z.infer<typeof questionFormSchema>
+
+// Espelha CONT-RF-016 CA-1 (motivo obrigatório de 10 a 500 caracteres).
+export const rejectQuestionFormSchema = z.object({
+  reason: z.string().min(10, "Motivo deve ter ao menos 10 caracteres").max(500, "Motivo deve ter no máximo 500 caracteres"),
+})
+
+export type RejectQuestionFormValues = z.infer<typeof rejectQuestionFormSchema>

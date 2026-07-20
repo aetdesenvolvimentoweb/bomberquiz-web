@@ -16,6 +16,13 @@ export interface QuestionsFilters {
 }
 
 const QUESTIONS_QUERY_KEY = ["content", "questions"] as const
+const PENDING_QUESTIONS_QUERY_KEY = ["content", "questions", "pending"] as const
+
+export interface PendingQuestionsFilters {
+  authorId?: string
+  page: number
+  pageSize: number
+}
 
 function toBody(values: QuestionFormValues) {
   return {
@@ -59,7 +66,12 @@ export function useCreateQuestion() {
 
   return useMutation({
     mutationFn: ({ values, asDraft }: { values: QuestionFormValues; asDraft: boolean }) =>
-      unwrap(apiClient.POST("/admin/questions", { params: { query: { as_draft: asDraft } }, body: toBody(values) })),
+      unwrap(
+        apiClient.POST("/admin/questions", {
+          params: { query: { as_draft: asDraft ? "true" : "false" } },
+          body: toBody(values),
+        }),
+      ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUESTIONS_QUERY_KEY })
       // Publicar/criar pergunta também afeta o questions_count exibido na tela de matérias.
@@ -102,6 +114,46 @@ export function useDeleteQuestion() {
       queryClient.invalidateQueries({ queryKey: QUESTIONS_QUERY_KEY })
       queryClient.invalidateQueries({ queryKey: ["content", "subjects"] })
     },
+  })
+}
+
+// ─── Fila de revisão de parceiro (CONT-RF-014 a 016) ──────────────────────────
+
+export function usePendingQuestions(filters: PendingQuestionsFilters) {
+  return useQuery({
+    queryKey: [...PENDING_QUESTIONS_QUERY_KEY, filters],
+    queryFn: () =>
+      unwrap(
+        apiClient.GET("/admin/questions/pending", {
+          params: { query: { author_id: filters.authorId, page: filters.page, page_size: filters.pageSize } },
+        }),
+      ),
+  })
+}
+
+function invalidateQuestionQueries(queryClient: ReturnType<typeof useQueryClient>) {
+  queryClient.invalidateQueries({ queryKey: QUESTIONS_QUERY_KEY })
+  queryClient.invalidateQueries({ queryKey: PENDING_QUESTIONS_QUERY_KEY })
+  queryClient.invalidateQueries({ queryKey: ["content", "subjects"] })
+}
+
+export function useApproveQuestion() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ id, notes }: { id: string; notes?: string }) =>
+      unwrap(apiClient.POST("/admin/questions/{id}/approve", { params: { path: { id } }, body: { notes } })),
+    onSuccess: () => invalidateQuestionQueries(queryClient),
+  })
+}
+
+export function useRejectQuestion() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ id, reason }: { id: string; reason: string }) =>
+      unwrap(apiClient.POST("/admin/questions/{id}/reject", { params: { path: { id } }, body: { reason } })),
+    onSuccess: () => invalidateQuestionQueries(queryClient),
   })
 }
 

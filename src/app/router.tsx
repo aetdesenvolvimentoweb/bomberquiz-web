@@ -19,6 +19,7 @@ import { SubjectsPage } from "@/pages/admin/subjects-page"
 import { QuestionsPage } from "@/pages/admin/questions-page"
 import { ReviewQueuePage } from "@/pages/admin/review-queue-page"
 import { PanelLayout } from "@/components/panel-layout"
+import { AppLayout } from "@/components/app-layout"
 
 export const router = createBrowserRouter([
   {
@@ -50,8 +51,13 @@ export const router = createBrowserRouter([
           {
             element: <ConsentGate />,
             children: [
-              { path: "/inicio", element: <HomePage /> },
-              { path: "/perfil", element: <ProfilePage /> },
+              {
+                element: <AppLayout />,
+                children: [
+                  { path: "/inicio", element: <HomePage /> },
+                  { path: "/perfil", element: <ProfilePage /> },
+                ],
+              },
               { path: "/perfil/email/confirmar", element: <EmailConfirmPage /> },
               {
                 element: <RequireAdmin />,

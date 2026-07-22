@@ -11,7 +11,7 @@ export function HomePage() {
   if (!user) return null
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-2xl flex-col items-center justify-center gap-6 px-4 text-center">
+    <div className="mx-auto flex max-w-2xl flex-col items-center justify-center gap-6 px-4 py-16 text-center">
       <div>
         <h1 className="text-2xl font-semibold">Olá, {user.name.split(" ")[0]}!</h1>
         <p className="mt-2 text-sm text-muted-foreground">

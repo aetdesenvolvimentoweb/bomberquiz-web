@@ -19,12 +19,21 @@ All paths below are relative to the `web/` repo root.
 
 ## Prerequisites
 
-Bun must be installed. Playwright's Chromium browser must be downloaded
-once (already cached in this container at `~/.cache/ms-playwright`):
+Bun and Node must be installed (the driver runs under `node`, not `bun` —
+`playwright`'s browser automation is the reliable path here). Playwright's
+Chromium browser must be downloaded once. Cache location is
+platform-dependent — `~/.cache/ms-playwright` on Linux/macOS, but on
+**Windows** it's `%LOCALAPPDATA%\ms-playwright`
+(`C:\Users\<user>\AppData\Local\ms-playwright`; confirmed already cached
+there in this environment). Check before re-downloading:
 
 ```bash
-npx --yes playwright install chromium
+ls "$LOCALAPPDATA/ms-playwright" 2>/dev/null || npx --yes playwright install chromium
 ```
+
+This app also **requires `bomberquiz-api` running**, which itself needs
+Docker Desktop up — see the `run-bomberquiz-api` skill's Prerequisites for
+the Windows Docker Desktop startup steps if `docker ps` fails.
 
 ## Setup
 
@@ -71,7 +80,10 @@ No separate build step for local driving — Vite serves TS/TSX directly in dev 
 Start the dev server in the background:
 
 ```bash
-lsof -ti:5173 -sTCP:LISTEN | xargs -r kill 2>/dev/null   # free the port first
+lsof -ti:5173 -sTCP:LISTEN | xargs -r kill 2>/dev/null   # free the port first, Linux/macOS
+# Windows (no lsof in Git Bash):
+powershell -NoProfile -Command "Get-NetTCPConnection -LocalPort 5173 -EA SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force }"
+
 bun run dev > /tmp/bomberquiz-web-dev.log 2>&1 &
 timeout 30 bash -c 'until curl -sf http://localhost:5173 >/dev/null; do sleep 1; done'
 ```
@@ -82,11 +94,26 @@ Then drive it:
 node .claude/skills/run-bomberquiz-web/driver.mjs /painel/eixos
 ```
 
+**On Windows/Git Bash, prefix with `MSYS_NO_PATHCONV=1`** — confirmed that
+without it, Git Bash's MSYS path-conversion rewrites the leading-slash
+route argument into a Windows path before Node ever sees it (`/painel/eixos`
+became `C:/Program Files/Git/painel/eixos`, and Playwright then threw
+`Cannot navigate to invalid URL`):
+
+```bash
+MSYS_NO_PATHCONV=1 node .claude/skills/run-bomberquiz-web/driver.mjs /painel/eixos
+```
+
 Logs in (`BOMBERQUIZ_LOGIN_EMAIL`/`_PASSWORD`, default
 `delivered@resend.dev` / `Senha-Forte-9x8y7z`), navigates to the path
 given as the first CLI arg (default `/inicio`), screenshots, and prints
 any browser console errors. Screenshots land in
-`/tmp/bomberquiz-web-screenshots/<path-with-underscores>.png`.
+`/tmp/bomberquiz-web-screenshots/<path-with-underscores>.png` — **on
+Windows this is not the Git Bash `/tmp`**, since the driver runs under the
+native Windows `node`, which resolves a leading `/` to the current drive
+root. Confirmed the file actually lands at
+`C:\tmp\bomberquiz-web-screenshots\<name>.png` (viewable with the Read
+tool at that path directly); `ls /tmp/...` from Git Bash won't find it.
 
 | env var | default | notes |
 |---|---|---|
@@ -97,7 +124,8 @@ any browser console errors. Screenshots land in
 Stop the dev server afterward:
 
 ```bash
-lsof -ti:5173 -sTCP:LISTEN | xargs -r kill
+lsof -ti:5173 -sTCP:LISTEN | xargs -r kill   # Linux/macOS
+powershell -NoProfile -Command "Get-NetTCPConnection -LocalPort 5173 -EA SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force }"   # Windows
 ```
 
 ## Run (human path)
@@ -109,8 +137,8 @@ bun run dev   # → http://localhost:5173, Ctrl-C to stop. Blocks the terminal.
 ## Test
 
 ```bash
-bun run typecheck   # tsc -b --noEmit
-bun run test        # vitest run — unit/RTL only, no E2E in this project yet
+bun run typecheck   # tsc -b --noEmit — confirmed clean
+bun run test        # vitest run — unit/RTL only, no E2E in this project yet — confirmed 40/40 passing, 10 files, ~17s
 ```
 
 ## Gotchas
@@ -138,6 +166,17 @@ bun run test        # vitest run — unit/RTL only, no E2E in this project yet
   found`) — that's why this skill has its own `driver.mjs` instead of the
   usual chromium-cli heredoc. If a future container has `chromium-cli`,
   either continues to work.
+- **On Windows/Git Bash, any leading-slash CLI argument gets silently
+  rewritten to a Windows path** before native (non-MSYS) executables like
+  `node` see it — MSYS's automatic POSIX-to-Windows path conversion.
+  `/painel/eixos` arrives as `C:/Program Files/Git/painel/eixos`, and
+  Playwright fails with `Cannot navigate to invalid URL` — not an
+  authentication or routing bug. Always run the driver with
+  `MSYS_NO_PATHCONV=1` on Windows (baked into the command above).
+- **Playwright's browser cache path differs by OS** — `~/.cache/ms-playwright`
+  on Linux/macOS, `%LOCALAPPDATA%\ms-playwright` on Windows. Checking the
+  wrong one looks like "not installed" and triggers a needless
+  `playwright install chromium` re-download.
 
 ## Troubleshooting
 

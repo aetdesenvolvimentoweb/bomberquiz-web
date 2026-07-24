@@ -16,3 +16,16 @@ if (!Element.prototype.releasePointerCapture) {
 if (!Element.prototype.scrollIntoView) {
   Element.prototype.scrollIntoView = () => {}
 }
+
+// jsdom também não implementa ResizeObserver, usado internamente por
+// @radix-ui/react-{radio-group,switch,slider} (via useSize) para medir o
+// thumb — sem o stub, montar esses componentes lança "ResizeObserver is not
+// defined".
+if (!("ResizeObserver" in globalThis)) {
+  class ResizeObserverStub {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  }
+  globalThis.ResizeObserver = ResizeObserverStub
+}

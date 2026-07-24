@@ -18,6 +18,9 @@ import { AxesPage } from "@/pages/admin/axes-page"
 import { SubjectsPage } from "@/pages/admin/subjects-page"
 import { QuestionsPage } from "@/pages/admin/questions-page"
 import { ReviewQueuePage } from "@/pages/admin/review-queue-page"
+import { StartQuizPage } from "@/pages/quiz/start-quiz-page"
+import { AnswerQuizPage } from "@/pages/quiz/answer-quiz-page"
+import { ResultQuizPage } from "@/pages/quiz/result-quiz-page"
 import { PanelLayout } from "@/components/panel-layout"
 import { AppLayout } from "@/components/app-layout"
 
@@ -56,6 +59,9 @@ export const router = createBrowserRouter([
                 children: [
                   { path: "/inicio", element: <HomePage /> },
                   { path: "/perfil", element: <ProfilePage /> },
+                  { path: "/quiz/iniciar", element: <StartQuizPage /> },
+                  { path: "/quiz/:quizId", element: <AnswerQuizPage /> },
+                  { path: "/quiz/:quizId/resultado", element: <ResultQuizPage /> },
                 ],
               },
               { path: "/perfil/email/confirmar", element: <EmailConfirmPage /> },

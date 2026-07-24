@@ -49,6 +49,8 @@ export default defineConfig({
       "/admin": { target: "http://localhost:3000", changeOrigin: true },
       "/plans": { target: "http://localhost:3000", changeOrigin: true },
       "/quizzes": { target: "http://localhost:3000", changeOrigin: true },
+      "/axes": { target: "http://localhost:3000", changeOrigin: true },
+      "/subjects": { target: "http://localhost:3000", changeOrigin: true },
       "/webhooks": { target: "http://localhost:3000", changeOrigin: true },
       "/api": { target: "http://localhost:3000", changeOrigin: true },
       "/health": { target: "http://localhost:3000", changeOrigin: true },

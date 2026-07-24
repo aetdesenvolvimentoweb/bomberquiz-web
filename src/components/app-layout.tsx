@@ -6,8 +6,10 @@ import { useSession } from "@/features/session/use-session"
 export function AppLayout() {
   const { user } = useSession()
 
-  const navItems: NavItem[] =
-    user?.role === "admin" ? [{ to: "/painel/eixos", label: "Painel administrativo" }] : []
+  const navItems: NavItem[] = [
+    { to: "/quiz/iniciar", label: "Quiz" },
+    ...(user?.role === "admin" ? [{ to: "/painel/eixos", label: "Painel administrativo" }] : []),
+  ]
 
   return <NavShell navItems={navItems} />
 }

@@ -436,6 +436,176 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/quizzes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Iniciar um quiz */
+        post: operations["startQuiz"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/quizzes/{id}/answers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Submeter resposta a uma questão */
+        post: operations["submitQuizAnswer"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/quizzes/{id}/finish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Finalizar quiz manualmente */
+        post: operations["finishQuiz"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/quizzes/{id}/result": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Ver resultado de um quiz */
+        get: operations["getQuizResult"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/quizzes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Histórico de quizzes do cliente */
+        get: operations["listMyQuizzes"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/performance": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Painel de desempenho do cliente */
+        get: operations["getPerformance"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/performance/reset": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Zerar estatísticas de desempenho do cliente */
+        post: operations["resetPerformanceStats"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/performance/timeline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Evolução mensal do desempenho do cliente */
+        get: operations["getPerformanceTimeline"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/axes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Listar eixos temáticos ativos */
+        get: operations["listActiveAxes"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/subjects": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Listar matérias ativas */
+        get: operations["listActiveSubjects"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1958,6 +2128,558 @@ export interface operations {
             };
             /** @description Pergunta não encontrada */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    startQuiz: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    /** @enum {string} */
+                    mode: "tap_simulation" | "free_subject" | "free_axis";
+                    subject_id?: string;
+                    axis_id?: string;
+                    size?: 10 | 20 | 30 | 50;
+                    timer_enabled: boolean;
+                    time_per_question_seconds?: number;
+                    /** @enum {string} */
+                    explanation_mode: "after_each" | "at_end";
+                };
+            };
+        };
+        responses: {
+            /** @description Quiz criado */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        quiz_id: string;
+                        started_at: string;
+                        time_limit_seconds: number | null;
+                        /** @enum {string} */
+                        explanation_mode: "after_each" | "at_end";
+                        total_questions: number;
+                        questions: {
+                            position: number;
+                            question_id: string;
+                            subject_name: string;
+                            statement: string;
+                            image_url: string | null;
+                            alternatives: string[];
+                        }[];
+                    };
+                };
+            };
+            /** @description Não autenticado */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Não é possível montar o quiz (perguntas insuficientes ou pesos de eixo inválidos) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Dados inválidos */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    submitQuizAnswer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    position: number;
+                    submitted_index: number;
+                };
+            };
+        };
+        responses: {
+            /** @description Resposta registrada */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        correct?: boolean;
+                        correct_index?: number;
+                        explanation?: string;
+                        source_reference?: string | null;
+                        recorded?: boolean;
+                        quiz_finished: boolean;
+                    };
+                };
+            };
+            /** @description Quiz não encontrado */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Quiz não está em andamento, posição já respondida, ou tempo esgotado */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Posição fora do intervalo */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    finishQuiz: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Resultado do quiz */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        quiz_id: string;
+                        /** @enum {string} */
+                        mode: "tap_simulation" | "free_subject" | "free_axis";
+                        /** @enum {string} */
+                        status: "in_progress" | "finished" | "expired" | "abandoned";
+                        started_at: string;
+                        finished_at: string | null;
+                        duration_seconds: number | null;
+                        total_questions: number;
+                        answered_count: number;
+                        correct_count: number;
+                        accuracy: number;
+                        breakdown_by_subject: {
+                            subject_id: string;
+                            subject_name: string;
+                            total: number;
+                            correct: number;
+                            accuracy: number;
+                        }[];
+                        questions: {
+                            position: number;
+                            question_id: string;
+                            subject_name: string;
+                            statement: string;
+                            image_url: string | null;
+                            alternatives: string[];
+                            submitted_index: number | null;
+                            correct_index: number;
+                            is_correct: boolean | null;
+                            explanation: string;
+                            source_reference: string | null;
+                        }[];
+                    };
+                };
+            };
+            /** @description Quiz não encontrado */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Quiz não está em andamento */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    getQuizResult: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Resultado do quiz */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        quiz_id: string;
+                        /** @enum {string} */
+                        mode: "tap_simulation" | "free_subject" | "free_axis";
+                        /** @enum {string} */
+                        status: "in_progress" | "finished" | "expired" | "abandoned";
+                        started_at: string;
+                        finished_at: string | null;
+                        duration_seconds: number | null;
+                        total_questions: number;
+                        answered_count: number;
+                        correct_count: number;
+                        accuracy: number;
+                        breakdown_by_subject: {
+                            subject_id: string;
+                            subject_name: string;
+                            total: number;
+                            correct: number;
+                            accuracy: number;
+                        }[];
+                        questions: {
+                            position: number;
+                            question_id: string;
+                            subject_name: string;
+                            statement: string;
+                            image_url: string | null;
+                            alternatives: string[];
+                            submitted_index: number | null;
+                            correct_index: number;
+                            is_correct: boolean | null;
+                            explanation: string;
+                            source_reference: string | null;
+                        }[];
+                    };
+                };
+            };
+            /** @description Quiz não encontrado */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Quiz ainda em andamento */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    listMyQuizzes: {
+        parameters: {
+            query?: {
+                page?: number;
+                page_size?: number;
+                mode?: "tap_simulation" | "free_subject" | "free_axis";
+                status?: string;
+                started_from?: string | null;
+                started_to?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Lista paginada do histórico */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: {
+                            id: string;
+                            /** @enum {string} */
+                            mode: "tap_simulation" | "free_subject" | "free_axis";
+                            scope_name: string | null;
+                            /** @enum {string} */
+                            status: "in_progress" | "finished" | "expired" | "abandoned";
+                            started_at: string;
+                            finished_at: string | null;
+                            total_questions: number;
+                            correct_count: number;
+                            accuracy: number;
+                        }[];
+                        page: number;
+                        page_size: number;
+                        total: number;
+                    };
+                };
+            };
+            /** @description Não autenticado */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    getPerformance: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Painel de desempenho */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        overall: {
+                            total_answers: number;
+                            correct_answers: number;
+                            accuracy: number;
+                            quizzes_finished: number;
+                        };
+                        by_axis: {
+                            axis_id: string;
+                            axis_name: string;
+                            total: number;
+                            correct: number;
+                            accuracy: number;
+                            subjects: {
+                                subject_id: string;
+                                subject_name: string;
+                                total: number;
+                                correct: number;
+                                accuracy: number;
+                                last_answered_at: string | null;
+                                /** @enum {string} */
+                                status_badge: "unrated" | "fraco" | "medio" | "forte";
+                            }[];
+                        }[];
+                        weakest_subjects: {
+                            subject_id: string;
+                            subject_name: string;
+                            total: number;
+                            correct: number;
+                            accuracy: number;
+                            last_answered_at: string | null;
+                            /** @enum {string} */
+                            status_badge: "unrated" | "fraco" | "medio" | "forte";
+                        }[];
+                        strongest_subjects: {
+                            subject_id: string;
+                            subject_name: string;
+                            total: number;
+                            correct: number;
+                            accuracy: number;
+                            last_answered_at: string | null;
+                            /** @enum {string} */
+                            status_badge: "unrated" | "fraco" | "medio" | "forte";
+                        }[];
+                        stats_reset_at: string | null;
+                    };
+                };
+            };
+            /** @description Não autenticado */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    resetPerformanceStats: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    password: string;
+                    /** @enum {boolean} */
+                    confirm: true;
+                };
+            };
+        };
+        responses: {
+            /** @description Estatísticas zeradas */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Senha incorreta */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Checkbox de confirmação não marcado */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    getPerformanceTimeline: {
+        parameters: {
+            query?: {
+                months?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Evolução mensal */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        stats_reset_at: string | null;
+                        months: {
+                            month: string;
+                            total_answers: number;
+                            correct_answers: number;
+                            accuracy: number | null;
+                            quizzes_finished: number;
+                        }[];
+                    };
+                };
+            };
+            /** @description Não autenticado */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Parâmetro months fora do intervalo (1-24) */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    listActiveAxes: {
+        parameters: {
+            query?: {
+                page?: number;
+                page_size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Lista paginada de eixos ativos */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: {
+                            id: string;
+                            name: string;
+                            tap_weight: number;
+                        }[];
+                        page: number;
+                        page_size: number;
+                        total: number;
+                    };
+                };
+            };
+            /** @description Não autenticado */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    listActiveSubjects: {
+        parameters: {
+            query?: {
+                page?: number;
+                page_size?: number;
+                axis_id?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Lista paginada de matérias ativas */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: {
+                            id: string;
+                            name: string;
+                            axis_id: string;
+                        }[];
+                        page: number;
+                        page_size: number;
+                        total: number;
+                    };
+                };
+            };
+            /** @description Não autenticado */
+            401: {
                 headers: {
                     [name: string]: unknown;
                 };

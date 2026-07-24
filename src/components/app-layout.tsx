@@ -8,6 +8,8 @@ export function AppLayout() {
 
   const navItems: NavItem[] = [
     { to: "/quiz/iniciar", label: "Quiz" },
+    { to: "/historico", label: "Histórico" },
+    { to: "/desempenho", label: "Desempenho" },
     ...(user?.role === "admin" ? [{ to: "/painel/eixos", label: "Painel administrativo" }] : []),
   ]
 

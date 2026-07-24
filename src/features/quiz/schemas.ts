@@ -25,3 +25,11 @@ export const startQuizFormSchema = z
   })
 
 export type StartQuizFormValues = z.infer<typeof startQuizFormSchema>
+
+// Mesma forma de deleteAccountSchema (features/profile/schemas.ts) — QUIZ-RF-008 CA-1/E-2.
+export const resetPerformanceStatsSchema = z.object({
+  password: z.string().min(1, "Informe sua senha"),
+  confirm: z.literal(true, { message: "Confirme que entende que esta ação é irreversível" }),
+})
+
+export type ResetPerformanceStatsFormValues = z.infer<typeof resetPerformanceStatsSchema>

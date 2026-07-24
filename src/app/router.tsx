@@ -21,6 +21,8 @@ import { ReviewQueuePage } from "@/pages/admin/review-queue-page"
 import { StartQuizPage } from "@/pages/quiz/start-quiz-page"
 import { AnswerQuizPage } from "@/pages/quiz/answer-quiz-page"
 import { ResultQuizPage } from "@/pages/quiz/result-quiz-page"
+import { HistoryPage } from "@/pages/quiz/history-page"
+import { PerformancePage } from "@/pages/quiz/performance-page"
 import { PanelLayout } from "@/components/panel-layout"
 import { AppLayout } from "@/components/app-layout"
 
@@ -62,6 +64,8 @@ export const router = createBrowserRouter([
                   { path: "/quiz/iniciar", element: <StartQuizPage /> },
                   { path: "/quiz/:quizId", element: <AnswerQuizPage /> },
                   { path: "/quiz/:quizId/resultado", element: <ResultQuizPage /> },
+                  { path: "/historico", element: <HistoryPage /> },
+                  { path: "/desempenho", element: <PerformancePage /> },
                 ],
               },
               { path: "/perfil/email/confirmar", element: <EmailConfirmPage /> },

@@ -53,7 +53,7 @@ beforeEach(() => {
 })
 
 describe("PanelLayout", () => {
-  it("renderiza a marca, os 4 links de navegação e o nome do usuário", async () => {
+  it("renderiza a marca, os 5 links de navegação e o nome do usuário", async () => {
     renderPanelLayout()
 
     expect(await screen.findByText("Conteúdo de Eixos")).toBeInTheDocument()
@@ -61,6 +61,7 @@ describe("PanelLayout", () => {
     expect(screen.getByRole("link", { name: "Matérias" })).toBeInTheDocument()
     expect(screen.getByRole("link", { name: "Perguntas" })).toBeInTheDocument()
     expect(screen.getByRole("link", { name: "Revisão" })).toBeInTheDocument()
+    expect(screen.getByRole("link", { name: "Geração por IA" })).toBeInTheDocument()
     expect(await screen.findByRole("button", { name: /Ana/ })).toBeInTheDocument()
   })
 

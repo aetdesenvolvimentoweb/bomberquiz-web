@@ -4,6 +4,7 @@ import { unwrap, apiErrorFrom } from "@/lib/api/errors"
 import { env } from "@/lib/env"
 
 export const AI_GENERATION_JOBS_QUERY_KEY = ["ai-generation", "jobs"] as const
+export const AI_GENERATION_JOB_QUERY_KEY = ["ai-generation", "job"] as const
 
 export interface AiGenerationJobsFilters {
   page: number
@@ -19,6 +20,45 @@ export function useAiGenerationJobs(filters: AiGenerationJobsFilters) {
           params: { query: { page: filters.page, page_size: filters.pageSize } },
         }),
       ),
+  })
+}
+
+const POLLING_STATUSES = new Set(["pending", "processing"])
+
+// AIGEN-RF-002 CA-5: o backend recomenda poll a cada 3s enquanto pending/processing
+// — primeiro uso de refetchInterval no projeto (sem precedente de polling antes
+// deste módulo). Para automaticamente ao chegar em completed/failed.
+export function useAiGenerationJob(jobId: string) {
+  return useQuery({
+    queryKey: [...AI_GENERATION_JOB_QUERY_KEY, jobId],
+    queryFn: () => unwrap(apiClient.GET("/admin/ai-generation/jobs/{id}", { params: { path: { id: jobId } } })),
+    refetchInterval: (query) => (POLLING_STATUSES.has(query.state.data?.status ?? "") ? 3000 : false),
+  })
+}
+
+// AIGEN-RF-009: exclui o job. `confirmDiscardPending` só é necessário quando
+// o job ainda tem questões pending (409 `ai_generation_job_has_pending_questions`
+// na primeira tentativa sem confirmação) — ver fluxo de 2 tentativas na página.
+export interface DeleteAiGenerationJobInput {
+  jobId: string
+  confirmDiscardPending: boolean
+}
+
+export function useDeleteAiGenerationJob() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ jobId, confirmDiscardPending }: DeleteAiGenerationJobInput) =>
+      unwrap(
+        apiClient.DELETE("/admin/ai-generation/jobs/{id}", {
+          params: { path: { id: jobId } },
+          body: { confirm_discard_pending: confirmDiscardPending },
+        }),
+      ),
+    onSuccess: (_data, { jobId }) => {
+      queryClient.invalidateQueries({ queryKey: AI_GENERATION_JOBS_QUERY_KEY })
+      queryClient.removeQueries({ queryKey: [...AI_GENERATION_JOB_QUERY_KEY, jobId] })
+    },
   })
 }
 

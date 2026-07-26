@@ -7,6 +7,8 @@ export const AI_GENERATION_JOBS_QUERY_KEY = ["ai-generation", "jobs"] as const
 export const AI_GENERATION_JOB_QUERY_KEY = ["ai-generation", "job"] as const
 
 export interface AiGenerationJobsFilters {
+  status?: string
+  subjectId?: string
   page: number
   pageSize: number
 }
@@ -17,7 +19,14 @@ export function useAiGenerationJobs(filters: AiGenerationJobsFilters) {
     queryFn: () =>
       unwrap(
         apiClient.GET("/admin/ai-generation/jobs", {
-          params: { query: { page: filters.page, page_size: filters.pageSize } },
+          params: {
+            query: {
+              status: filters.status,
+              subject_id: filters.subjectId,
+              page: filters.page,
+              page_size: filters.pageSize,
+            },
+          },
         }),
       ),
   })

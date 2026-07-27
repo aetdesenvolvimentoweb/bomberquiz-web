@@ -45,6 +45,88 @@ export function useAiGenerationJob(jobId: string) {
   })
 }
 
+// AIGEN-RF-005: editar questão gerada antes da aprovação (só permitido enquanto
+// review_status === "pending", o backend retorna 409 caso contrário).
+export interface UpdateGeneratedQuestionInput {
+  jobId: string
+  questionId: string
+  values: {
+    statement: string
+    alternatives: string[]
+    correctIndex: number
+    explanation: string
+    sourceReference?: string
+  }
+}
+
+export function useUpdateGeneratedQuestion() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ jobId, questionId, values }: UpdateGeneratedQuestionInput) =>
+      unwrap(
+        apiClient.PATCH("/admin/ai-generation/jobs/{job_id}/questions/{question_id}", {
+          params: { path: { job_id: jobId, question_id: questionId } },
+          body: {
+            statement: values.statement,
+            alternatives: values.alternatives,
+            correct_index: values.correctIndex,
+            explanation: values.explanation,
+            source_reference: values.sourceReference,
+          },
+        }),
+      ),
+    onSuccess: (_data, { jobId }) => {
+      queryClient.invalidateQueries({ queryKey: [...AI_GENERATION_JOB_QUERY_KEY, jobId] })
+    },
+  })
+}
+
+export interface GeneratedQuestionActionInput {
+  jobId: string
+  questionId: string
+}
+
+// AIGEN-RF-006: aprovar questão gerada individualmente — publica direto,
+// sem diálogo de confirmação (mesmo fluxo de useApproveQuestion no parceiro).
+export function useApproveGeneratedQuestion() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ jobId, questionId }: GeneratedQuestionActionInput) =>
+      unwrap(
+        apiClient.POST("/admin/ai-generation/jobs/{job_id}/questions/{question_id}/approve", {
+          params: { path: { job_id: jobId, question_id: questionId } },
+        }),
+      ),
+    onSuccess: (_data, { jobId }) => {
+      queryClient.invalidateQueries({ queryKey: [...AI_GENERATION_JOB_QUERY_KEY, jobId] })
+    },
+  })
+}
+
+// AIGEN-RF-007: descartar questão gerada individualmente, motivo opcional.
+export interface DiscardGeneratedQuestionInput extends GeneratedQuestionActionInput {
+  reason?: string
+}
+
+export function useDiscardGeneratedQuestion() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ jobId, questionId, reason }: DiscardGeneratedQuestionInput) =>
+      unwrap(
+        apiClient.POST("/admin/ai-generation/jobs/{job_id}/questions/{question_id}/discard", {
+          params: { path: { job_id: jobId, question_id: questionId } },
+          body: { reason },
+        }),
+      ),
+    onSuccess: (_data, { jobId }) => {
+      queryClient.invalidateQueries({ queryKey: [...AI_GENERATION_JOB_QUERY_KEY, jobId] })
+    },
+  })
+}
+
 // AIGEN-RF-009: exclui o job. `confirmDiscardPending` só é necessário quando
 // o job ainda tem questões pending (409 `ai_generation_job_has_pending_questions`
 // na primeira tentativa sem confirmação) — ver fluxo de 2 tentativas na página.

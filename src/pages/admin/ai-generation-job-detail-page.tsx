@@ -4,6 +4,7 @@ import { toast } from "sonner"
 import { Badge, type BadgeProps } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Spinner } from "@/components/ui/spinner"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -14,7 +15,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { useAiGenerationJob, useDeleteAiGenerationJob } from "@/features/ai-generation/ai-generation-api"
+import {
+  useAiGenerationJob,
+  useApproveGeneratedQuestion,
+  useDeleteAiGenerationJob,
+} from "@/features/ai-generation/ai-generation-api"
+import { AiGenerationQuestionEditDialog } from "./ai-generation-question-edit-dialog"
+import { AiGenerationDiscardDialog } from "./ai-generation-discard-dialog"
 import { ApiError } from "@/lib/api/errors"
 
 const STATUS_LABEL: Record<string, string> = {
@@ -31,6 +38,18 @@ const STATUS_VARIANT: Record<string, BadgeProps["variant"]> = {
   failed: "destructive",
 }
 
+const REVIEW_STATUS_LABEL: Record<string, string> = {
+  pending: "Pendente",
+  approved: "Aprovada",
+  discarded: "Descartada",
+}
+
+const REVIEW_STATUS_VARIANT: Record<string, BadgeProps["variant"]> = {
+  pending: "secondary",
+  approved: "success",
+  discarded: "destructive",
+}
+
 // AIGEN-RF-002: acompanhamento de um job (pending/processing com polling,
 // failed com o motivo + exclusão, completed com um resumo — a revisão
 // questão-a-questão chega na Fatia 5).
@@ -39,9 +58,22 @@ export function AiGenerationJobDetailPage() {
   const navigate = useNavigate()
   const { data: job, isPending, isError, error } = useAiGenerationJob(jobId!)
   const deleteMutation = useDeleteAiGenerationJob()
+  const approveMutation = useApproveGeneratedQuestion()
 
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false)
   const [confirmPendingOpen, setConfirmPendingOpen] = useState(false)
+  const [editingQuestionId, setEditingQuestionId] = useState<string | null>(null)
+  const [discardingQuestionId, setDiscardingQuestionId] = useState<string | null>(null)
+
+  async function handleApprove(questionId: string) {
+    try {
+      await approveMutation.mutateAsync({ jobId: jobId!, questionId })
+      toast.success("Questão aprovada e publicada.")
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : "Não foi possível aprovar a questão."
+      toast.error(message)
+    }
+  }
 
   async function handleDelete(confirmDiscardPending: boolean) {
     try {
@@ -117,11 +149,61 @@ export function AiGenerationJobDetailPage() {
       )}
 
       {job.status === "completed" && (
-        <div className="space-y-2 rounded-md border p-4">
-          <p className="text-sm">
+        <div className="space-y-4">
+          <p className="text-sm text-muted-foreground">
             {job.question_count_generated ?? 0} de {job.question_count_requested} questões geradas.
           </p>
-          <p className="text-sm text-muted-foreground">A revisão das questões geradas chega em uma próxima fatia.</p>
+
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Enunciado</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-right">Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {job.questions.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={3} className="text-center text-sm text-muted-foreground">
+                    Nenhuma questão gerada.
+                  </TableCell>
+                </TableRow>
+              )}
+              {job.questions.map((question) => (
+                <TableRow key={question.id}>
+                  <TableCell className="max-w-md font-medium">
+                    {question.question_data.statement}
+                    {question.edited && <span className="ml-2 text-xs text-muted-foreground">(editado)</span>}
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={REVIEW_STATUS_VARIANT[question.review_status]}>
+                      {REVIEW_STATUS_LABEL[question.review_status]}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right space-x-2">
+                    {question.review_status === "pending" && (
+                      <>
+                        <Button size="sm" variant="outline" onClick={() => setEditingQuestionId(question.id)}>
+                          Editar
+                        </Button>
+                        <Button
+                          size="sm"
+                          loading={approveMutation.isPending}
+                          onClick={() => handleApprove(question.id)}
+                        >
+                          Aprovar
+                        </Button>
+                        <Button size="sm" variant="destructive" onClick={() => setDiscardingQuestionId(question.id)}>
+                          Descartar
+                        </Button>
+                      </>
+                    )}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </div>
       )}
 
@@ -152,6 +234,35 @@ export function AiGenerationJobDetailPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {job.status === "completed" && (
+        <>
+          <AiGenerationQuestionEditDialog
+            open={editingQuestionId !== null}
+            onOpenChange={(open) => !open && setEditingQuestionId(null)}
+            jobId={jobId!}
+            question={(() => {
+              const q = job.questions.find((item) => item.id === editingQuestionId)
+              if (!q) return null
+              return {
+                id: q.id,
+                statement: q.question_data.statement,
+                alternatives: q.question_data.alternatives,
+                correctIndex: q.question_data.correct_index,
+                explanation: q.question_data.explanation,
+                sourceReference: q.question_data.source_reference,
+              }
+            })()}
+          />
+
+          <AiGenerationDiscardDialog
+            open={discardingQuestionId !== null}
+            onOpenChange={(open) => !open && setDiscardingQuestionId(null)}
+            jobId={jobId!}
+            questionId={discardingQuestionId}
+          />
+        </>
+      )}
     </div>
   )
 }

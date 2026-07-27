@@ -127,6 +127,55 @@ export function useDiscardGeneratedQuestion() {
   })
 }
 
+// AIGEN-RF-008: aprovar/descartar em lote todas as questões pending de um job.
+export interface BatchGeneratedQuestionsInput {
+  jobId: string
+}
+
+export interface BatchGeneratedQuestionsResult {
+  processed: number
+  approved?: number
+  discarded?: number
+  errors: { question_id: string; error: string }[]
+}
+
+export function useApproveAllGeneratedQuestions() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ jobId }: BatchGeneratedQuestionsInput) =>
+      unwrap(
+        apiClient.POST("/admin/ai-generation/jobs/{job_id}/approve-all", {
+          params: { path: { job_id: jobId } },
+        }),
+      ),
+    onSuccess: (_data, { jobId }) => {
+      queryClient.invalidateQueries({ queryKey: [...AI_GENERATION_JOB_QUERY_KEY, jobId] })
+    },
+  })
+}
+
+export interface DiscardAllGeneratedQuestionsInput extends BatchGeneratedQuestionsInput {
+  reason?: string
+}
+
+export function useDiscardAllGeneratedQuestions() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ jobId, reason }: DiscardAllGeneratedQuestionsInput) =>
+      unwrap(
+        apiClient.POST("/admin/ai-generation/jobs/{job_id}/discard-all", {
+          params: { path: { job_id: jobId } },
+          body: { reason },
+        }),
+      ),
+    onSuccess: (_data, { jobId }) => {
+      queryClient.invalidateQueries({ queryKey: [...AI_GENERATION_JOB_QUERY_KEY, jobId] })
+    },
+  })
+}
+
 // AIGEN-RF-009: exclui o job. `confirmDiscardPending` só é necessário quando
 // o job ainda tem questões pending (409 `ai_generation_job_has_pending_questions`
 // na primeira tentativa sem confirmação) — ver fluxo de 2 tentativas na página.

@@ -17,8 +17,10 @@ import {
 } from "@/components/ui/alert-dialog"
 import {
   useAiGenerationJob,
+  useApproveAllGeneratedQuestions,
   useApproveGeneratedQuestion,
   useDeleteAiGenerationJob,
+  useDiscardAllGeneratedQuestions,
 } from "@/features/ai-generation/ai-generation-api"
 import { AiGenerationQuestionEditDialog } from "./ai-generation-question-edit-dialog"
 import { AiGenerationDiscardDialog } from "./ai-generation-discard-dialog"
@@ -59,11 +61,15 @@ export function AiGenerationJobDetailPage() {
   const { data: job, isPending, isError, error } = useAiGenerationJob(jobId!)
   const deleteMutation = useDeleteAiGenerationJob()
   const approveMutation = useApproveGeneratedQuestion()
+  const approveAllMutation = useApproveAllGeneratedQuestions()
+  const discardAllMutation = useDiscardAllGeneratedQuestions()
 
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false)
   const [confirmPendingOpen, setConfirmPendingOpen] = useState(false)
   const [editingQuestionId, setEditingQuestionId] = useState<string | null>(null)
   const [discardingQuestionId, setDiscardingQuestionId] = useState<string | null>(null)
+  const [confirmApproveAllOpen, setConfirmApproveAllOpen] = useState(false)
+  const [confirmDiscardAllOpen, setConfirmDiscardAllOpen] = useState(false)
 
   async function handleApprove(questionId: string) {
     try {
@@ -93,6 +99,30 @@ export function AiGenerationJobDetailPage() {
       toast.error(message)
     } finally {
       setConfirmDeleteOpen(false)
+    }
+  }
+
+  async function handleApproveAll() {
+    try {
+      const result = await approveAllMutation.mutateAsync({ jobId: jobId! })
+      toast.success(`${result.processed} questões aprovadas.`)
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : "Não foi possível aprovar as questões."
+      toast.error(message)
+    } finally {
+      setConfirmApproveAllOpen(false)
+    }
+  }
+
+  async function handleDiscardAll() {
+    try {
+      const result = await discardAllMutation.mutateAsync({ jobId: jobId! })
+      toast.success(`${result.processed} questões descartadas.`)
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : "Não foi possível descartar as questões."
+      toast.error(message)
+    } finally {
+      setConfirmDiscardAllOpen(false)
     }
   }
 
@@ -150,9 +180,21 @@ export function AiGenerationJobDetailPage() {
 
       {job.status === "completed" && (
         <div className="space-y-4">
-          <p className="text-sm text-muted-foreground">
-            {job.question_count_generated ?? 0} de {job.question_count_requested} questões geradas.
-          </p>
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-muted-foreground">
+              {job.question_count_generated ?? 0} de {job.question_count_requested} questões geradas.
+            </p>
+            {job.questions.some((question) => question.review_status === "pending") && (
+              <div className="space-x-2">
+                <Button size="sm" variant="outline" onClick={() => setConfirmDiscardAllOpen(true)}>
+                  Descartar todas
+                </Button>
+                <Button size="sm" onClick={() => setConfirmApproveAllOpen(true)}>
+                  Aprovar todas
+                </Button>
+              </div>
+            )}
+          </div>
 
           <Table>
             <TableHeader>
@@ -231,6 +273,36 @@ export function AiGenerationJobDetailPage() {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={() => handleDelete(true)}>Excluir mesmo assim</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={confirmApproveAllOpen} onOpenChange={setConfirmApproveAllOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Aprovar todas as questões pendentes?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Todas as questões ainda pendentes de revisão serão aprovadas e publicadas.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleApproveAll}>Aprovar todas</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={confirmDiscardAllOpen} onOpenChange={setConfirmDiscardAllOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Descartar todas as questões pendentes?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Todas as questões ainda pendentes de revisão serão descartadas. Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDiscardAll}>Descartar todas</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

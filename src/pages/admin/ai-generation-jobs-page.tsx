@@ -1,12 +1,24 @@
 import { useState } from "react"
 import { Link } from "react-router-dom"
+import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Badge, type BadgeProps } from "@/components/ui/badge"
 import { Spinner } from "@/components/ui/spinner"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Pagination, PaginationContent, PaginationItem, PaginationNext, PaginationPrevious } from "@/components/ui/pagination"
-import { useAiGenerationJobs } from "@/features/ai-generation/ai-generation-api"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import { useAiGenerationJobs, useDeleteAiGenerationJob } from "@/features/ai-generation/ai-generation-api"
 import { useSubjects } from "@/features/content/subjects-api"
+import { ApiError } from "@/lib/api/errors"
 
 const PAGE_SIZE = 20
 
@@ -28,6 +40,9 @@ export function AiGenerationJobsPage() {
   const [status, setStatus] = useState<string>("all")
   const [subjectId, setSubjectId] = useState<string>("all")
   const [page, setPage] = useState(1)
+  const [deletingJobId, setDeletingJobId] = useState<string | null>(null)
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false)
+  const [confirmPendingOpen, setConfirmPendingOpen] = useState(false)
 
   const { data: subjectsData } = useSubjects({ status: "all", page: 1, pageSize: 100 })
   const { data, isPending, isError } = useAiGenerationJobs({
@@ -36,9 +51,29 @@ export function AiGenerationJobsPage() {
     page,
     pageSize: PAGE_SIZE,
   })
+  const deleteMutation = useDeleteAiGenerationJob()
 
   const totalPages = data ? Math.max(1, Math.ceil(data.total / PAGE_SIZE)) : 1
   const subjectOptions = subjectsData?.items ?? []
+
+  async function handleDelete(confirmDiscardPending: boolean) {
+    try {
+      await deleteMutation.mutateAsync({ jobId: deletingJobId!, confirmDiscardPending })
+      toast.success("Job excluído.")
+      setDeletingJobId(null)
+    } catch (err) {
+      if (err instanceof ApiError && err.code === "ai_generation_job_has_pending_questions") {
+        setConfirmDeleteOpen(false)
+        setConfirmPendingOpen(true)
+        return
+      }
+      const message = err instanceof ApiError ? err.message : "Não foi possível excluir o job."
+      toast.error(message)
+      setDeletingJobId(null)
+    } finally {
+      setConfirmDeleteOpen(false)
+    }
+  }
 
   return (
     <div className="mx-auto max-w-5xl space-y-6 p-6">
@@ -105,12 +140,13 @@ export function AiGenerationJobsPage() {
                 <TableHead>Questões</TableHead>
                 <TableHead>Revisão</TableHead>
                 <TableHead>Criado em</TableHead>
+                <TableHead className="text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {data.items.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center text-sm text-muted-foreground">
+                  <TableCell colSpan={7} className="text-center text-sm text-muted-foreground">
                     Nenhum job de geração ainda.
                   </TableCell>
                 </TableRow>
@@ -148,6 +184,18 @@ export function AiGenerationJobsPage() {
                   <TableCell className="text-muted-foreground">
                     {new Date(job.created_at).toLocaleString("pt-BR")}
                   </TableCell>
+                  <TableCell className="text-right">
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={() => {
+                        setDeletingJobId(job.id)
+                        setConfirmDeleteOpen(true)
+                      }}
+                    >
+                      Excluir
+                    </Button>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -180,6 +228,42 @@ export function AiGenerationJobsPage() {
           )}
         </>
       )}
+
+      <AlertDialog open={confirmDeleteOpen} onOpenChange={setConfirmDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir job de geração?</AlertDialogTitle>
+            <AlertDialogDescription>Esta ação não pode ser desfeita.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={() => handleDelete(false)}>Excluir</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={confirmPendingOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            setConfirmPendingOpen(false)
+            setDeletingJobId(null)
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Ainda há questões pendentes de revisão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Excluir o job também descarta as questões ainda não revisadas. Deseja continuar?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={() => handleDelete(true)}>Excluir mesmo assim</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

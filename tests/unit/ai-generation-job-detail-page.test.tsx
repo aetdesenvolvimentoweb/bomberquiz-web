@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest"
-import { render, screen, waitFor, act } from "@testing-library/react"
+import { render, screen, waitFor, act, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { MemoryRouter, Routes, Route } from "react-router-dom"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
@@ -8,7 +8,7 @@ import { AiGenerationJobDetailPage } from "@/pages/admin/ai-generation-job-detai
 import { apiClient } from "@/lib/api/client"
 
 vi.mock("@/lib/api/client", () => ({
-  apiClient: { GET: vi.fn(), DELETE: vi.fn() },
+  apiClient: { GET: vi.fn(), DELETE: vi.fn(), PATCH: vi.fn(), POST: vi.fn() },
 }))
 
 vi.mock("sonner", () => ({
@@ -18,6 +18,8 @@ vi.mock("sonner", () => ({
 const mockedApiClient = apiClient as unknown as {
   GET: ReturnType<typeof vi.fn>
   DELETE: ReturnType<typeof vi.fn>
+  PATCH: ReturnType<typeof vi.fn>
+  POST: ReturnType<typeof vi.fn>
 }
 
 function jsonResponse<T>(data: T, status = 200) {
@@ -64,9 +66,27 @@ function renderDetailPage(jobId = "job-1") {
   )
 }
 
+const generatedQuestion = {
+  id: "question-1",
+  generation_index: 0,
+  review_status: "pending" as const,
+  question_data: {
+    statement: "Qual o procedimento correto para combate a incêndio classe A?",
+    alternatives: ["Água", "Pó químico", "CO2", "Espuma"],
+    correct_index: 0,
+    explanation: "Água é o agente extintor mais indicado.",
+    source_reference: null as string | null,
+  },
+  edited: false,
+  approved_question_id: null as string | null,
+  reviewed_at: null as string | null,
+}
+
 beforeEach(() => {
   mockedApiClient.GET.mockReset()
   mockedApiClient.DELETE.mockReset()
+  mockedApiClient.PATCH.mockReset()
+  mockedApiClient.POST.mockReset()
   vi.mocked(toast.success).mockClear()
   vi.mocked(toast.error).mockClear()
 })
@@ -173,5 +193,118 @@ describe("AiGenerationJobDetailPage", () => {
     await act(() => vi.advanceTimersByTimeAsync(3000))
 
     await vi.waitFor(() => expect(mockedApiClient.GET).toHaveBeenCalledTimes(2))
+  })
+
+  it("mostra a tabela de revisão com as questões geradas quando completed", async () => {
+    mockedApiClient.GET.mockResolvedValue(
+      jsonResponse({
+        ...baseJob,
+        status: "completed",
+        question_count_generated: 2,
+        questions: [
+          generatedQuestion,
+          {
+            ...generatedQuestion,
+            id: "question-2",
+            review_status: "approved",
+            question_data: { ...generatedQuestion.question_data, statement: "Questão já aprovada" },
+          },
+        ],
+      }),
+    )
+
+    renderDetailPage()
+
+    expect(await screen.findByText(/Qual o procedimento correto/)).toBeInTheDocument()
+    const table = screen.getByRole("table")
+    expect(within(table).getByText("Pendente")).toBeInTheDocument()
+    expect(within(table).getByText("Aprovada")).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Aprovar" })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Editar" })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Descartar" })).toBeInTheDocument()
+
+    const approvedRow = within(table).getByText("Questão já aprovada").closest("tr")!
+    expect(within(approvedRow).queryByRole("button")).not.toBeInTheDocument()
+  })
+
+  it("aprova uma questão pendente", async () => {
+    mockedApiClient.GET.mockResolvedValue(
+      jsonResponse({ ...baseJob, status: "completed", question_count_generated: 1, questions: [generatedQuestion] }),
+    )
+    mockedApiClient.POST.mockResolvedValue(jsonResponse({ ...generatedQuestion, review_status: "approved" }))
+
+    renderDetailPage()
+    const user = userEvent.setup()
+
+    await screen.findByText(/Qual o procedimento correto/)
+    await user.click(screen.getByRole("button", { name: "Aprovar" }))
+
+    await waitFor(() =>
+      expect(mockedApiClient.POST).toHaveBeenCalledWith(
+        "/admin/ai-generation/jobs/{job_id}/questions/{question_id}/approve",
+        expect.objectContaining({ params: { path: { job_id: "job-1", question_id: "question-1" } } }),
+      ),
+    )
+    expect(toast.success).toHaveBeenCalledWith("Questão aprovada e publicada.")
+  })
+
+  it("edita uma questão pendente", async () => {
+    mockedApiClient.GET.mockResolvedValue(
+      jsonResponse({ ...baseJob, status: "completed", question_count_generated: 1, questions: [generatedQuestion] }),
+    )
+    mockedApiClient.PATCH.mockResolvedValue(jsonResponse({ ...generatedQuestion, edited: true }))
+
+    renderDetailPage()
+    const user = userEvent.setup()
+
+    await screen.findByText(/Qual o procedimento correto/)
+    await user.click(screen.getByRole("button", { name: "Editar" }))
+
+    const dialog = await screen.findByRole("dialog")
+    const statementField = within(dialog).getByLabelText("Enunciado")
+    await user.clear(statementField)
+    await user.type(statementField, "Enunciado revisado com mais de dez caracteres")
+    await user.click(within(dialog).getByRole("button", { name: "Salvar" }))
+
+    await waitFor(() =>
+      expect(mockedApiClient.PATCH).toHaveBeenCalledWith(
+        "/admin/ai-generation/jobs/{job_id}/questions/{question_id}",
+        expect.objectContaining({
+          params: { path: { job_id: "job-1", question_id: "question-1" } },
+          body: expect.objectContaining({ statement: "Enunciado revisado com mais de dez caracteres" }),
+        }),
+      ),
+    )
+    expect(toast.success).toHaveBeenCalledWith("Questão atualizada.")
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument())
+  })
+
+  it("descarta uma questão pendente com motivo opcional", async () => {
+    mockedApiClient.GET.mockResolvedValue(
+      jsonResponse({ ...baseJob, status: "completed", question_count_generated: 1, questions: [generatedQuestion] }),
+    )
+    mockedApiClient.POST.mockResolvedValue(jsonResponse({ ...generatedQuestion, review_status: "discarded" }))
+
+    renderDetailPage()
+    const user = userEvent.setup()
+
+    await screen.findByText(/Qual o procedimento correto/)
+    await user.click(screen.getByRole("button", { name: "Descartar" }))
+
+    const dialog = await screen.findByRole("dialog")
+    await user.type(within(dialog).getByLabelText("Motivo (opcional)"), "Fora do escopo da matéria")
+    await user.click(within(dialog).getByRole("button", { name: "Descartar" }))
+
+    await waitFor(() =>
+      expect(mockedApiClient.POST).toHaveBeenCalledWith(
+        "/admin/ai-generation/jobs/{job_id}/questions/{question_id}/discard",
+        expect.objectContaining({
+          params: { path: { job_id: "job-1", question_id: "question-1" } },
+          body: { reason: "Fora do escopo da matéria" },
+        }),
+      ),
+    )
+    expect(toast.success).toHaveBeenCalledWith("Questão descartada.")
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument())
   })
 })

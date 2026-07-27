@@ -307,4 +307,67 @@ describe("AiGenerationJobDetailPage", () => {
     expect(toast.success).toHaveBeenCalledWith("Questão descartada.")
     await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument())
   })
+
+  it("não mostra os botões de lote quando não há questões pendentes", async () => {
+    mockedApiClient.GET.mockResolvedValue(
+      jsonResponse({
+        ...baseJob,
+        status: "completed",
+        question_count_generated: 1,
+        questions: [{ ...generatedQuestion, review_status: "approved" }],
+      }),
+    )
+
+    renderDetailPage()
+
+    await screen.findByText(/Qual o procedimento correto/)
+    expect(screen.queryByRole("button", { name: "Aprovar todas" })).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "Descartar todas" })).not.toBeInTheDocument()
+  })
+
+  it("aprova todas as questões pendentes em lote", async () => {
+    mockedApiClient.GET.mockResolvedValue(
+      jsonResponse({ ...baseJob, status: "completed", question_count_generated: 1, questions: [generatedQuestion] }),
+    )
+    mockedApiClient.POST.mockResolvedValue(jsonResponse({ processed: 1, approved: 1, errors: [] }))
+
+    renderDetailPage()
+    const user = userEvent.setup()
+
+    await screen.findByText(/Qual o procedimento correto/)
+    await user.click(screen.getByRole("button", { name: "Aprovar todas" }))
+    const dialog = await screen.findByRole("dialog")
+    await user.click(within(dialog).getByRole("button", { name: "Aprovar todas" }))
+
+    await waitFor(() =>
+      expect(mockedApiClient.POST).toHaveBeenCalledWith(
+        "/admin/ai-generation/jobs/{job_id}/approve-all",
+        expect.objectContaining({ params: { path: { job_id: "job-1" } } }),
+      ),
+    )
+    expect(toast.success).toHaveBeenCalledWith("1 questões aprovadas.")
+  })
+
+  it("descarta todas as questões pendentes em lote", async () => {
+    mockedApiClient.GET.mockResolvedValue(
+      jsonResponse({ ...baseJob, status: "completed", question_count_generated: 1, questions: [generatedQuestion] }),
+    )
+    mockedApiClient.POST.mockResolvedValue(jsonResponse({ processed: 1, discarded: 1, errors: [] }))
+
+    renderDetailPage()
+    const user = userEvent.setup()
+
+    await screen.findByText(/Qual o procedimento correto/)
+    await user.click(screen.getByRole("button", { name: "Descartar todas" }))
+    const dialog = await screen.findByRole("dialog")
+    await user.click(within(dialog).getByRole("button", { name: "Descartar todas" }))
+
+    await waitFor(() =>
+      expect(mockedApiClient.POST).toHaveBeenCalledWith(
+        "/admin/ai-generation/jobs/{job_id}/discard-all",
+        expect.objectContaining({ params: { path: { job_id: "job-1" } }, body: { reason: undefined } }),
+      ),
+    )
+    expect(toast.success).toHaveBeenCalledWith("1 questões descartadas.")
+  })
 })

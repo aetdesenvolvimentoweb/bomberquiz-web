@@ -3,14 +3,31 @@ import { render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { MemoryRouter } from "react-router-dom"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import { toast } from "sonner"
 import { AiGenerationJobsPage } from "@/pages/admin/ai-generation-jobs-page"
 import { apiClient } from "@/lib/api/client"
 
 vi.mock("@/lib/api/client", () => ({
-  apiClient: { GET: vi.fn() },
+  apiClient: { GET: vi.fn(), DELETE: vi.fn() },
 }))
 
-const mockedApiClient = apiClient as unknown as { GET: ReturnType<typeof vi.fn> }
+vi.mock("sonner", () => ({
+  toast: { success: vi.fn(), error: vi.fn() },
+}))
+
+const mockedApiClient = apiClient as unknown as { GET: ReturnType<typeof vi.fn>; DELETE: ReturnType<typeof vi.fn> }
+
+function errorResponse(code: string, message: string, status = 409) {
+  return {
+    data: undefined,
+    error: { error: { code, message, request_id: "req_test" } },
+    response: new Response(null, { status }),
+  }
+}
+
+function jsonResponse<T>(data: T, status = 200) {
+  return { data, error: undefined, response: new Response(null, { status }) }
+}
 
 function renderJobsPage() {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
@@ -86,6 +103,9 @@ function mockGetByPath(responses: { subjects?: unknown; jobs?: unknown }) {
 
 beforeEach(() => {
   mockedApiClient.GET.mockReset()
+  mockedApiClient.DELETE.mockReset()
+  vi.mocked(toast.success).mockClear()
+  vi.mocked(toast.error).mockClear()
 })
 
 describe("AiGenerationJobsPage", () => {
@@ -206,5 +226,53 @@ describe("AiGenerationJobsPage", () => {
         }),
       ),
     )
+  })
+
+  it("exclui um job direto quando não há questões pendentes", async () => {
+    mockGetByPath({ jobs: { items: [jobA], page: 1, page_size: 20, total: 1 } })
+    mockedApiClient.DELETE.mockResolvedValue(jsonResponse({ deleted: true, approved_preserved: 6, removed_questions: 0 }))
+
+    renderJobsPage()
+    const user = userEvent.setup()
+
+    await screen.findByText("Salvamento em Altura")
+    await user.click(screen.getByRole("button", { name: "Excluir" }))
+    const dialog = await screen.findByRole("dialog")
+    await user.click(within(dialog).getByRole("button", { name: "Excluir" }))
+
+    await waitFor(() =>
+      expect(mockedApiClient.DELETE).toHaveBeenCalledWith(
+        "/admin/ai-generation/jobs/{id}",
+        expect.objectContaining({ params: { path: { id: "job-1" } }, body: { confirm_discard_pending: false } }),
+      ),
+    )
+    expect(toast.success).toHaveBeenCalledWith("Job excluído.")
+  })
+
+  it("pede confirmação extra ao excluir job com questões pendentes (409)", async () => {
+    mockGetByPath({ jobs: { items: [jobA], page: 1, page_size: 20, total: 1 } })
+    mockedApiClient.DELETE.mockResolvedValueOnce(
+      errorResponse("ai_generation_job_has_pending_questions", "Ainda há 2 questões pendentes de revisão. Confirme o descarte."),
+    ).mockResolvedValueOnce(jsonResponse({ deleted: true, approved_preserved: 6, removed_questions: 2 }))
+
+    renderJobsPage()
+    const user = userEvent.setup()
+
+    await screen.findByText("Salvamento em Altura")
+    await user.click(screen.getByRole("button", { name: "Excluir" }))
+    const dialog = await screen.findByRole("dialog")
+    await user.click(within(dialog).getByRole("button", { name: "Excluir" }))
+
+    const secondDialog = await screen.findByRole("dialog")
+    expect(within(secondDialog).getByText("Ainda há questões pendentes de revisão")).toBeInTheDocument()
+    await user.click(within(secondDialog).getByRole("button", { name: "Excluir mesmo assim" }))
+
+    await waitFor(() =>
+      expect(mockedApiClient.DELETE).toHaveBeenLastCalledWith(
+        "/admin/ai-generation/jobs/{id}",
+        expect.objectContaining({ params: { path: { id: "job-1" } }, body: { confirm_discard_pending: true } }),
+      ),
+    )
+    expect(toast.success).toHaveBeenCalledWith("Job excluído.")
   })
 })

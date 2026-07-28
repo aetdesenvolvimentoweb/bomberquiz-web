@@ -71,7 +71,8 @@ describe("PerformancePage", () => {
     renderPerformancePage()
 
     expect(await screen.findByText("65%")).toBeInTheDocument()
-    expect(screen.getByText("65/100")).toBeInTheDocument()
+    expect(screen.getByText("Perguntas respondidas")).toBeInTheDocument()
+    expect(screen.getByText("100")).toBeInTheDocument()
     expect(screen.getByText("Pontos fracos")).toBeInTheDocument()
     expect(screen.getByText("Pontos fortes")).toBeInTheDocument()
     const weakestSection = screen.getByText("Pontos fracos").closest("div")!

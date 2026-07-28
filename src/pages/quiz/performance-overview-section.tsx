@@ -1,8 +1,18 @@
-import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts"
+import { useState } from "react"
+import { Bar, BarChart, CartesianGrid, Cell, LabelList, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { useActiveSubjects } from "@/features/content/catalog-api"
 import type { PerformanceResponse } from "@/features/quiz/performance-api"
 
 type Subject = PerformanceResponse["by_axis"][number]["subjects"][number]
+type Axis = PerformanceResponse["by_axis"][number]
+type ChartMode = "axis" | "subject"
+
+const ACCURACY_COLORS: Record<"correct" | "incorrect", string> = {
+  correct: "hsl(var(--success))",
+  incorrect: "hsl(var(--destructive))",
+}
 
 const STATUS_BADGE_LABELS: Record<Subject["status_badge"], string> = {
   unrated: "Sem dados",
@@ -16,13 +26,6 @@ const STATUS_BADGE_VARIANT: Record<Subject["status_badge"], "secondary" | "destr
   fraco: "destructive",
   medio: "outline",
   forte: "success",
-}
-
-const STATUS_CHART_COLOR: Record<Subject["status_badge"], string> = {
-  unrated: "hsl(var(--muted-foreground))",
-  fraco: "hsl(var(--destructive))",
-  medio: "hsl(var(--gold))",
-  forte: "hsl(var(--success))",
 }
 
 function SubjectList({ title, subjects, emptyText }: { title: string; subjects: Subject[]; emptyText: string }) {
@@ -51,47 +54,123 @@ function SubjectList({ title, subjects, emptyText }: { title: string; subjects: 
 export function PerformanceOverviewSection({ performance }: { performance: PerformanceResponse }) {
   const { overall, weakest_subjects, strongest_subjects, by_axis } = performance
   const subjects = by_axis.flatMap((axis) => axis.subjects)
-  const chartData = subjects.map((subject) => ({ ...subject, accuracy_pct: Math.round(subject.accuracy * 100) }))
+  const { data: activeSubjects } = useActiveSubjects()
+
+  const [mode, setMode] = useState<ChartMode>("axis")
+  const [selectedAxisId, setSelectedAxisId] = useState<string>(by_axis[0]?.axis_id ?? "")
+  const [selectedSubjectId, setSelectedSubjectId] = useState<string>("")
+
+  const selectedAxis: Axis | undefined = by_axis.find((axis) => axis.axis_id === selectedAxisId) ?? by_axis[0]
+  const subjectsForAxis = selectedAxis?.subjects ?? []
+  const selectedSubject: Subject | undefined =
+    subjectsForAxis.find((subject) => subject.subject_id === selectedSubjectId) ?? subjectsForAxis[0]
+
+  const scope =
+    mode === "axis"
+      ? selectedAxis && { label: selectedAxis.axis_name, total: selectedAxis.total, correct: selectedAxis.correct }
+      : selectedSubject && { label: selectedSubject.subject_name, total: selectedSubject.total, correct: selectedSubject.correct }
+
+  const correctPct = scope && scope.total > 0 ? Math.round((scope.correct / scope.total) * 100) : 0
+  const errorPct = scope && scope.total > 0 ? 100 - correctPct : 0
+  const errors = scope ? scope.total - scope.correct : 0
+
+  const chartData: { key: "correct" | "incorrect"; name: string; pct: number; displayLabel: string }[] = scope
+    ? [
+        { key: "correct", name: "Acertos", pct: correctPct, displayLabel: `${scope.correct} (${correctPct}%)` },
+        { key: "incorrect", name: "Erros", pct: errorPct, displayLabel: `${errors} (${errorPct}%)` },
+      ]
+    : []
 
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         <div className="rounded-lg border p-3 text-center">
+          <p className="text-2xl font-semibold">{overall.total_answers}</p>
+          <p className="text-xs text-muted-foreground">Perguntas respondidas</p>
+        </div>
+        <div
+          className="rounded-lg border p-3 text-center"
+          title={`${overall.correct_answers} acertos / ${overall.total_answers - overall.correct_answers} erros`}
+          aria-label={`Aproveitamento: ${overall.correct_answers} acertos e ${overall.total_answers - overall.correct_answers} erros`}
+        >
           <p className="text-2xl font-semibold">{Math.round(overall.accuracy * 100)}%</p>
           <p className="text-xs text-muted-foreground">Aproveitamento</p>
         </div>
         <div className="rounded-lg border p-3 text-center">
-          <p className="text-2xl font-semibold">
-            {overall.correct_answers}/{overall.total_answers}
-          </p>
-          <p className="text-xs text-muted-foreground">Acertos</p>
-        </div>
-        <div className="rounded-lg border p-3 text-center">
           <p className="text-2xl font-semibold">{overall.quizzes_finished}</p>
-          <p className="text-xs text-muted-foreground">Quizzes finalizados</p>
+          <p className="text-xs text-muted-foreground">Testes finalizados</p>
         </div>
         <div className="rounded-lg border p-3 text-center">
-          <p className="text-2xl font-semibold">{subjects.length}</p>
+          <p className="text-2xl font-semibold">
+            {subjects.length}
+            {typeof activeSubjects?.total === "number" && `/${activeSubjects.total}`}
+          </p>
           <p className="text-xs text-muted-foreground">Matérias estudadas</p>
         </div>
       </div>
 
-      {chartData.length > 0 ? (
+      {by_axis.length > 0 ? (
         <div>
-          <h3 className="font-medium">Aproveitamento por matéria</h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={chartData} margin={{ bottom: 40 }}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="subject_name" tick={{ fontSize: 12 }} interval={0} angle={-25} textAnchor="end" height={60} />
-              <YAxis domain={[0, 100]} unit="%" />
-              <Tooltip formatter={(value) => [`${value}%`, "Aproveitamento"]} />
-              <Bar dataKey="accuracy_pct">
-                {chartData.map((subject) => (
-                  <Cell key={subject.subject_id} fill={STATUS_CHART_COLOR[subject.status_badge]} />
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h3 className="font-medium">{mode === "axis" ? "Aproveitamento por eixo" : "Aproveitamento por matéria"}</h3>
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="flex gap-2">
+                <Button type="button" size="sm" variant={mode === "axis" ? "default" : "outline"} onClick={() => setMode("axis")}>
+                  Por eixo
+                </Button>
+                <Button type="button" size="sm" variant={mode === "subject" ? "default" : "outline"} onClick={() => setMode("subject")}>
+                  Por matéria
+                </Button>
+              </div>
+              <select
+                className="flex h-9 rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                value={selectedAxis?.axis_id ?? ""}
+                onChange={(e) => setSelectedAxisId(e.target.value)}
+                aria-label="Eixo"
+              >
+                {by_axis.map((axis) => (
+                  <option key={axis.axis_id} value={axis.axis_id}>
+                    {axis.axis_name}
+                  </option>
                 ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
+              </select>
+              {mode === "subject" && (
+                <select
+                  className="flex h-9 rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  value={selectedSubject?.subject_id ?? ""}
+                  onChange={(e) => setSelectedSubjectId(e.target.value)}
+                  aria-label="Matéria"
+                >
+                  {subjectsForAxis.map((subject) => (
+                    <option key={subject.subject_id} value={subject.subject_id}>
+                      {subject.subject_name}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
+          </div>
+
+          {!scope || scope.total === 0 ? (
+            <p className="mt-2 text-sm text-muted-foreground">
+              {mode === "axis" ? "Sem respostas registradas neste eixo ainda." : "Sem respostas registradas nesta matéria ainda."}
+            </p>
+          ) : (
+            <ResponsiveContainer width="100%" height={260}>
+              <BarChart data={chartData} margin={{ top: 24 }}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                <YAxis domain={[0, 100]} unit="%" allowDecimals={false} />
+                <Tooltip formatter={(_value, _name, entry: any) => [entry.payload.displayLabel, entry.payload.name]} />
+                <Bar dataKey="pct" radius={[4, 4, 0, 0]}>
+                  {chartData.map((entry) => (
+                    <Cell key={entry.key} fill={ACCURACY_COLORS[entry.key]} />
+                  ))}
+                  <LabelList dataKey="displayLabel" position="top" />
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          )}
         </div>
       ) : (
         <p className="text-sm text-muted-foreground">Responda alguns quizzes para ver seu aproveitamento por matéria.</p>

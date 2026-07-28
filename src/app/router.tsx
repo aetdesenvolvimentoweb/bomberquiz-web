@@ -18,9 +18,6 @@ import { AxesPage } from "@/pages/admin/axes-page"
 import { SubjectsPage } from "@/pages/admin/subjects-page"
 import { QuestionsPage } from "@/pages/admin/questions-page"
 import { ReviewQueuePage } from "@/pages/admin/review-queue-page"
-import { AiGenerationJobsPage } from "@/pages/admin/ai-generation-jobs-page"
-import { AiGenerationNewJobPage } from "@/pages/admin/ai-generation-new-job-page"
-import { AiGenerationJobDetailPage } from "@/pages/admin/ai-generation-job-detail-page"
 import { StartQuizPage } from "@/pages/quiz/start-quiz-page"
 import { AnswerQuizPage } from "@/pages/quiz/answer-quiz-page"
 import { ResultQuizPage } from "@/pages/quiz/result-quiz-page"
@@ -82,9 +79,6 @@ export const router = createBrowserRouter([
                       { path: "/painel/materias", element: <SubjectsPage /> },
                       { path: "/painel/perguntas", element: <QuestionsPage /> },
                       { path: "/painel/revisao", element: <ReviewQueuePage /> },
-                      { path: "/painel/geracao-ia", element: <AiGenerationJobsPage /> },
-                      { path: "/painel/geracao-ia/novo", element: <AiGenerationNewJobPage /> },
-                      { path: "/painel/geracao-ia/:jobId", element: <AiGenerationJobDetailPage /> },
                     ],
                   },
                 ],

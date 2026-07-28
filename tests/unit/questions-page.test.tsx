@@ -66,6 +66,7 @@ const questionA = {
   axis_name: "Salvamento",
   statement_preview: "Qual o procedimento correto para X?",
   status: "published" as const,
+  source: "manual" as const,
   author_id: "admin-1",
   author_name: "Admin Teste",
   has_image: false,
@@ -74,6 +75,14 @@ const questionA = {
   archived_at: null,
   total_answers: 0,
   accuracy: 0,
+}
+
+const questionB = {
+  ...questionA,
+  id: "question-2",
+  source: "ai_bot" as const,
+  author_id: "admin-2",
+  author_name: "Ana Bot Souza",
 }
 
 function mockGetByPath(responses: { axes?: unknown; subjects?: unknown; questions?: unknown }) {
@@ -117,6 +126,16 @@ describe("QuestionsPage", () => {
     expect(await screen.findByText("Qual o procedimento correto para X?")).toBeInTheDocument()
     expect(within(screen.getByRole("table")).getByText("Primeiros Socorros")).toBeInTheDocument()
     expect(within(screen.getByRole("table")).getByText("Publicada")).toBeInTheDocument()
+  })
+
+  it("mostra a coluna Criação com primeiro nome do autor e a origem (manual/IA Bot)", async () => {
+    mockGetByPath({ questions: { items: [questionA, questionB], page: 1, page_size: 20, total: 2 } })
+
+    renderQuestionsPage()
+
+    const table = await screen.findByRole("table")
+    expect(within(table).getByText("Admin - Manual")).toBeInTheDocument()
+    expect(within(table).getByText("Ana - IA Bot")).toBeInTheDocument()
   })
 
   it("cria uma nova pergunta publicada direto pelo diálogo", async () => {

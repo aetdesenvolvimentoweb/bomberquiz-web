@@ -436,126 +436,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/admin/ai-generation/jobs/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Consultar status e questões geradas de um job */
-        get: operations["getAiGenerationJob"];
-        put?: never;
-        post?: never;
-        /** Excluir job de geração (mantém questões já aprovadas) */
-        delete: operations["deleteAiGenerationJob"];
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/admin/ai-generation/jobs": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Listar histórico de jobs de geração */
-        get: operations["listAiGenerationJobs"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/admin/ai-generation/jobs/{job_id}/questions/{question_id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        /** Editar questão gerada antes da aprovação */
-        patch: operations["updateAiGeneratedQuestion"];
-        trace?: never;
-    };
-    "/admin/ai-generation/jobs/{job_id}/questions/{question_id}/approve": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Aprovar questão gerada individualmente */
-        post: operations["approveAiGeneratedQuestion"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/admin/ai-generation/jobs/{job_id}/questions/{question_id}/discard": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Descartar questão gerada individualmente */
-        post: operations["discardAiGeneratedQuestion"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/admin/ai-generation/jobs/{job_id}/approve-all": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Aprovar em lote todas as questões pendentes de um job */
-        post: operations["approveAllAiGeneratedQuestions"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/admin/ai-generation/jobs/{job_id}/discard-all": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Descartar em lote todas as questões pendentes de um job */
-        post: operations["discardAllAiGeneratedQuestions"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/quizzes": {
         parameters: {
             query?: never;
@@ -1733,6 +1613,8 @@ export interface operations {
                             statement_preview: string;
                             /** @enum {string} */
                             status: "draft" | "pending_review" | "published" | "archived";
+                            /** @enum {string} */
+                            source: "manual" | "ai_bot";
                             author_id: string;
                             author_name: string;
                             has_image: boolean;
@@ -1783,6 +1665,8 @@ export interface operations {
                     explanation: string;
                     source_reference?: string;
                     image_url?: string;
+                    /** @enum {string} */
+                    source?: "manual" | "ai_bot";
                 };
             };
         };
@@ -1806,6 +1690,8 @@ export interface operations {
                         image_url: string | null;
                         /** @enum {string} */
                         status: "draft" | "pending_review" | "published" | "archived";
+                        /** @enum {string} */
+                        source: "manual" | "ai_bot";
                         author_id: string;
                         author_name: string;
                         created_at: string;
@@ -1858,6 +1744,8 @@ export interface operations {
                             statement_preview: string;
                             /** @enum {string} */
                             status: "draft" | "pending_review" | "published" | "archived";
+                            /** @enum {string} */
+                            source: "manual" | "ai_bot";
                             author_id: string;
                             author_name: string;
                             has_image: boolean;
@@ -1927,6 +1815,8 @@ export interface operations {
                         image_url: string | null;
                         /** @enum {string} */
                         status: "draft" | "pending_review" | "published" | "archived";
+                        /** @enum {string} */
+                        source: "manual" | "ai_bot";
                         author_id: string;
                         author_name: string;
                         created_at: string;
@@ -1994,6 +1884,8 @@ export interface operations {
                         image_url: string | null;
                         /** @enum {string} */
                         status: "draft" | "pending_review" | "published" | "archived";
+                        /** @enum {string} */
+                        source: "manual" | "ai_bot";
                         author_id: string;
                         author_name: string;
                         created_at: string;
@@ -2062,6 +1954,8 @@ export interface operations {
                         image_url: string | null;
                         /** @enum {string} */
                         status: "draft" | "pending_review" | "published" | "archived";
+                        /** @enum {string} */
+                        source: "manual" | "ai_bot";
                         author_id: string;
                         author_name: string;
                         created_at: string;
@@ -2163,6 +2057,8 @@ export interface operations {
                         image_url: string | null;
                         /** @enum {string} */
                         status: "draft" | "pending_review" | "published" | "archived";
+                        /** @enum {string} */
+                        source: "manual" | "ai_bot";
                         author_id: string;
                         author_name: string;
                         created_at: string;
@@ -2231,6 +2127,8 @@ export interface operations {
                         image_url: string | null;
                         /** @enum {string} */
                         status: "draft" | "pending_review" | "published" | "archived";
+                        /** @enum {string} */
+                        source: "manual" | "ai_bot";
                         author_id: string;
                         author_name: string;
                         created_at: string;
@@ -2248,548 +2146,6 @@ export interface operations {
             };
             /** @description Pergunta não encontrada */
             404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    getAiGenerationJob: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Job */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        id: string;
-                        /** @enum {string} */
-                        status: "pending" | "processing" | "completed" | "failed";
-                        subject_id: string;
-                        subject_name: string;
-                        material_name: string;
-                        question_count_requested: number;
-                        question_count_generated: number | null;
-                        queue_position: number;
-                        model_used: string | null;
-                        prompt_tokens: number | null;
-                        completion_tokens: number | null;
-                        error_message: string | null;
-                        created_at: string;
-                        completed_at: string | null;
-                        questions: {
-                            id: string;
-                            generation_index: number;
-                            /** @enum {string} */
-                            review_status: "pending" | "approved" | "discarded";
-                            question_data: {
-                                statement: string;
-                                alternatives: string[];
-                                correct_index: number;
-                                explanation: string;
-                                source_reference: string | null;
-                            };
-                            edited: boolean;
-                            approved_question_id: string | null;
-                            reviewed_at: string | null;
-                        }[];
-                        summary: {
-                            pending: number;
-                            approved: number;
-                            discarded: number;
-                        } | null;
-                    };
-                };
-            };
-            /** @description Não autenticado */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Acesso restrito a administradores */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Job inexistente ou de outro admin */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    deleteAiGenerationJob: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "application/json": {
-                    confirm_discard_pending?: boolean;
-                };
-            };
-        };
-        responses: {
-            /** @description Job excluído */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        /** @enum {boolean} */
-                        deleted: true;
-                        approved_preserved: number;
-                        removed_questions: number;
-                    };
-                };
-            };
-            /** @description Não autenticado */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Acesso restrito a administradores */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Job inexistente ou de outro admin */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Job em processamento ou com questões pendentes não confirmadas */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    listAiGenerationJobs: {
-        parameters: {
-            query?: {
-                page?: number;
-                page_size?: number;
-                status?: string;
-                subject_id?: string;
-            };
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Lista paginada de jobs */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        items: {
-                            id: string;
-                            /** @enum {string} */
-                            status: "pending" | "processing" | "completed" | "failed";
-                            subject_name: string;
-                            material_name: string;
-                            question_count_requested: number;
-                            question_count_generated: number | null;
-                            summary: {
-                                pending: number;
-                                approved: number;
-                                discarded: number;
-                            } | null;
-                            error_message: string | null;
-                            created_at: string;
-                            completed_at: string | null;
-                        }[];
-                        page: number;
-                        page_size: number;
-                        total: number;
-                    };
-                };
-            };
-            /** @description Não autenticado */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Acesso restrito a administradores */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    updateAiGeneratedQuestion: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                job_id: string;
-                question_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "application/json": {
-                    statement?: string;
-                    alternatives?: string[];
-                    correct_index?: number;
-                    explanation?: string;
-                    source_reference?: string;
-                };
-            };
-        };
-        responses: {
-            /** @description Questão atualizada */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        id: string;
-                        generation_index: number;
-                        /** @enum {string} */
-                        review_status: "pending" | "approved" | "discarded";
-                        question_data: {
-                            statement: string;
-                            alternatives: string[];
-                            correct_index: number;
-                            explanation: string;
-                            source_reference: string | null;
-                        };
-                        edited: boolean;
-                        approved_question_id: string | null;
-                        reviewed_at: string | null;
-                    };
-                };
-            };
-            /** @description Não autenticado */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Acesso restrito a administradores */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Job ou questão inexistente */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Job não concluído ou questão já revisada */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Validação de conteúdo falhou */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    approveAiGeneratedQuestion: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                job_id: string;
-                question_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Questão aprovada */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        id: string;
-                        generation_index: number;
-                        /** @enum {string} */
-                        review_status: "pending" | "approved" | "discarded";
-                        question_data: {
-                            statement: string;
-                            alternatives: string[];
-                            correct_index: number;
-                            explanation: string;
-                            source_reference: string | null;
-                        };
-                        edited: boolean;
-                        approved_question_id: string | null;
-                        reviewed_at: string | null;
-                    };
-                };
-            };
-            /** @description Não autenticado */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Acesso restrito a administradores */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Job ou questão inexistente */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Job não concluído ou questão já revisada */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    discardAiGeneratedQuestion: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                job_id: string;
-                question_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "application/json": {
-                    reason?: string;
-                };
-            };
-        };
-        responses: {
-            /** @description Questão descartada */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        id: string;
-                        generation_index: number;
-                        /** @enum {string} */
-                        review_status: "pending" | "approved" | "discarded";
-                        question_data: {
-                            statement: string;
-                            alternatives: string[];
-                            correct_index: number;
-                            explanation: string;
-                            source_reference: string | null;
-                        };
-                        edited: boolean;
-                        approved_question_id: string | null;
-                        reviewed_at: string | null;
-                    };
-                };
-            };
-            /** @description Não autenticado */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Acesso restrito a administradores */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Job ou questão inexistente */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Job não concluído ou questão já revisada */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    approveAllAiGeneratedQuestions: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                job_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Resultado do lote */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        processed: number;
-                        approved: number;
-                        errors: {
-                            question_id: string;
-                            error: string;
-                        }[];
-                    };
-                };
-            };
-            /** @description Não autenticado */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Acesso restrito a administradores */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Job inexistente */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Job não concluído ou sem questões pendentes */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
-    discardAllAiGeneratedQuestions: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                job_id: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: {
-            content: {
-                "application/json": {
-                    reason?: string;
-                };
-            };
-        };
-        responses: {
-            /** @description Resultado do lote */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": {
-                        processed: number;
-                        discarded: number;
-                        errors: {
-                            question_id: string;
-                            error: string;
-                        }[];
-                    };
-                };
-            };
-            /** @description Não autenticado */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Acesso restrito a administradores */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Job inexistente */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Job não concluído ou sem questões pendentes */
-            409: {
                 headers: {
                     [name: string]: unknown;
                 };

@@ -56,6 +56,17 @@ const STATUS_LABELS: Record<string, string> = {
   archived: "Arquivada",
 }
 
+const SOURCE_LABELS: Record<string, string> = {
+  manual: "Manual",
+  ai_bot: "IA Bot",
+}
+
+/** "Fulano - Manual" / "Admin - IA Bot" — primeiro nome do autor + origem da criação. */
+function creationLabel(authorName: string, source: string): string {
+  const firstName = authorName.trim().split(/\s+/)[0] ?? authorName
+  return `${firstName} - ${SOURCE_LABELS[source] ?? source}`
+}
+
 export function QuestionsPage() {
   const [axisId, setAxisId] = useState<string>("all")
   const [subjectId, setSubjectId] = useState<string>("all")
@@ -220,6 +231,7 @@ export function QuestionsPage() {
                 <TableHead>Matéria</TableHead>
                 <TableHead>Eixo</TableHead>
                 <TableHead>Status</TableHead>
+                <TableHead>Criação</TableHead>
                 <TableHead>Imagem</TableHead>
                 <TableHead className="text-right">Ações</TableHead>
               </TableRow>
@@ -227,7 +239,7 @@ export function QuestionsPage() {
             <TableBody>
               {data.items.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center text-sm text-muted-foreground">
+                  <TableCell colSpan={7} className="text-center text-sm text-muted-foreground">
                     Nenhuma pergunta encontrada.
                   </TableCell>
                 </TableRow>
@@ -241,6 +253,9 @@ export function QuestionsPage() {
                     <Badge variant={question.status === "published" ? "success" : "secondary"}>
                       {STATUS_LABELS[question.status] ?? question.status}
                     </Badge>
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {creationLabel(question.author_name, question.source)}
                   </TableCell>
                   <TableCell>{question.has_image ? "Sim" : "—"}</TableCell>
                   <TableCell className="text-right">

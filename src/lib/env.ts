@@ -9,4 +9,6 @@ if (apiBaseUrl === undefined) {
 
 export const env = {
   API_BASE_URL: apiBaseUrl,
+  // Monitoramento de erro (ADR-0031, opcional) — ausente = SDK não inicializa.
+  SENTRY_DSN: import.meta.env.VITE_SENTRY_DSN,
 }

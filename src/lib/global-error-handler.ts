@@ -1,9 +1,10 @@
+import { captureException } from "@/lib/monitoring/sentry"
+
 /**
  * Cobre erros que escapam do React (fora do ciclo de render — ex.: dentro de
  * event handlers assíncronos, setTimeout) e promises rejeitadas sem catch,
- * casos que o RouteErrorBoundary não alcança. Sem serviço externo de
- * monitoramento (Sentry) por enquanto: loga estruturado no console, único
- * canal de visibilidade disponível hoje.
+ * casos que o RouteErrorBoundary não alcança. Loga estruturado no console e,
+ * se configurado (ADR-0031), reporta ao Sentry.
  */
 export function installGlobalErrorHandlers(): void {
   window.addEventListener("error", (event) => {
@@ -16,6 +17,7 @@ export function installGlobalErrorHandlers(): void {
       stack: event.error instanceof Error ? event.error.stack : undefined,
       timestamp: new Date().toISOString(),
     })
+    captureException(event.error ?? new Error(event.message))
   })
 
   window.addEventListener("unhandledrejection", (event) => {
@@ -26,5 +28,6 @@ export function installGlobalErrorHandlers(): void {
       stack: reason instanceof Error ? reason.stack : undefined,
       timestamp: new Date().toISOString(),
     })
+    captureException(reason)
   })
 }

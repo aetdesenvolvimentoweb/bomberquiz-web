@@ -2,6 +2,7 @@ import { defineConfig } from "vitest/config"
 import { loadEnv } from "vite"
 import react from "@vitejs/plugin-react"
 import { VitePWA } from "vite-plugin-pwa"
+import { sentryVitePlugin } from "@sentry/vite-plugin"
 import path from "node:path"
 import { fileURLToPath } from "node:url"
 
@@ -65,6 +66,23 @@ function apiRuntimeCachingRoutes(apiBaseUrl: string) {
 export default defineConfig(({ mode }) => {
   const apiBaseUrl = loadEnv(mode, process.cwd(), "VITE_").VITE_API_BASE_URL ?? ""
 
+  // Upload de sourcemap pro Sentry (ADR-0031) — não usa prefixo VITE_ de propósito:
+  // token/org/project são segredos de build, não devem vazar pro bundle do cliente.
+  // Ausentes (dev local, CI sem conta Sentry configurada) = plugin não entra, build
+  // segue normal só sem upload.
+  const sentryAuthToken = process.env.SENTRY_AUTH_TOKEN
+  const sentryOrg = process.env.SENTRY_ORG
+  const sentryProject = process.env.SENTRY_PROJECT
+  const sentryPlugin =
+    sentryAuthToken && sentryOrg && sentryProject
+      ? sentryVitePlugin({
+          authToken: sentryAuthToken,
+          org: sentryOrg,
+          project: sentryProject,
+          sourcemaps: { filesToDeleteAfterUpload: ["dist/**/*.map"] },
+        })
+      : undefined
+
   return {
     plugins: [
       react(),
@@ -104,7 +122,16 @@ export default defineConfig(({ mode }) => {
           runtimeCaching: apiRuntimeCachingRoutes(apiBaseUrl),
         },
       }),
+      // Sourcemaps precisam existir (build.sourcemap abaixo) para o upload funcionar,
+      // e o plugin já os remove do dist/ publicado depois de enviados — não expõe
+      // fonte original em produção.
+      sentryPlugin,
     ],
+    build: {
+      // Necessário para o Sentry conseguir desminificar stack traces de produção
+      // (ADR-0031) — os .map somem do dist/ publicado via sentryVitePlugin acima.
+      sourcemap: true,
+    },
     resolve: {
       alias: {
         "@": path.resolve(dirname, "./src"),
@@ -123,6 +150,7 @@ export default defineConfig(({ mode }) => {
         "/admin": { target: "http://localhost:3000", changeOrigin: true },
         "/plans": { target: "http://localhost:3000", changeOrigin: true },
         "/quizzes": { target: "http://localhost:3000", changeOrigin: true },
+        "/events": { target: "http://localhost:3000", changeOrigin: true },
         "/axes": { target: "http://localhost:3000", changeOrigin: true },
         "/subjects": { target: "http://localhost:3000", changeOrigin: true },
         "/webhooks": { target: "http://localhost:3000", changeOrigin: true },

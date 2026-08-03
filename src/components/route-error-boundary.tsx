@@ -1,6 +1,8 @@
 import { useEffect } from "react"
 import { isRouteErrorResponse, useRouteError } from "react-router-dom"
 import { Button } from "@/components/ui/button"
+import { ApiError } from "@/lib/api/errors"
+import { captureException } from "@/lib/monitoring/sentry"
 
 /** errorElement de topo do router — cobre erros de render não tratados em qualquer rota. */
 export function RouteErrorBoundary() {
@@ -8,6 +10,7 @@ export function RouteErrorBoundary() {
 
   useEffect(() => {
     console.error(error)
+    captureException(error, error instanceof ApiError ? error.requestId : undefined)
   }, [error])
 
   const message = isRouteErrorResponse(error)

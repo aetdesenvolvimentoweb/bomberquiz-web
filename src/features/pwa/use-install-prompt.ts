@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react"
+import { reportPwaEvent } from "@/features/pwa/report-pwa-event"
 
 const DISMISS_STORAGE_KEY = "bomberquiz:install-prompt-dismissed"
 const DISMISS_COOLDOWN_MS = 14 * 24 * 60 * 60 * 1000
@@ -42,6 +43,7 @@ export function useInstallPrompt() {
     function handleBeforeInstallPrompt(event: Event) {
       event.preventDefault()
       setDeferredPrompt(event as BeforeInstallPromptEvent)
+      reportPwaEvent("pwa_install_prompted")
     }
 
     function handleAppInstalled() {
@@ -60,13 +62,17 @@ export function useInstallPrompt() {
   const promptInstall = useCallback(async () => {
     if (!deferredPrompt) return
     await deferredPrompt.prompt()
-    await deferredPrompt.userChoice
+    const { outcome } = await deferredPrompt.userChoice
+    reportPwaEvent(outcome === "accepted" ? "pwa_install_accepted" : "pwa_install_dismissed", {
+      source: "native_prompt",
+    })
     setDeferredPrompt(null)
   }, [deferredPrompt])
 
   const dismiss = useCallback(() => {
     localStorage.setItem(DISMISS_STORAGE_KEY, String(Date.now()))
     setDismissed(true)
+    reportPwaEvent("pwa_install_dismissed", { source: "banner" })
   }, [])
 
   const platform: InstallPlatform | null = installed || dismissed ? null : deferredPrompt ? "android" : isIosSafari() ? "ios" : null

@@ -18,6 +18,8 @@ import {
 import { useFinishQuiz, useSubmitAnswer, type StartQuizResponse } from "@/features/quiz/quiz-api"
 import { useQuizCountdown, QuizTimer } from "./quiz-timer"
 import { ApiError } from "@/lib/api/errors"
+import { useNetworkStatus } from "@/features/pwa/use-network-status"
+import { reportPwaEvent } from "@/features/pwa/report-pwa-event"
 
 type AnswerRecord =
   | { kind: "after_each"; submittedIndex: number; correct: boolean; correctIndex: number; explanation: string; sourceReference: string | null }
@@ -57,6 +59,22 @@ function AnswerQuizFlow({ quizId, startPayload }: { quizId: string; startPayload
   const [quizFinishedPending, setQuizFinishedPending] = useState(false)
   const [finishDialogOpen, setFinishDialogOpen] = useState(false)
   const autoFinishTriggered = useRef(false)
+  const { isOnline } = useNetworkStatus()
+  const offlineSinceRef = useRef<number | null>(null)
+
+  // QUIZ-P-01: mede quanto tempo a sessão fica offline enquanto em andamento,
+  // pra embasar a decisão de suporte a quiz totalmente offline com sincronização.
+  useEffect(() => {
+    if (!isOnline) {
+      offlineSinceRef.current = Date.now()
+      return
+    }
+    if (offlineSinceRef.current !== null) {
+      const durationMs = Date.now() - offlineSinceRef.current
+      offlineSinceRef.current = null
+      reportPwaEvent("quiz_offline_period", { duration_ms: durationMs, quiz_session_id: quizId })
+    }
+  }, [isOnline, quizId])
 
   const resultUrl = `/quiz/${quizId}/resultado`
   const countdown = useQuizCountdown(startPayload.started_at, startPayload.time_limit_seconds)

@@ -1,4 +1,4 @@
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { toast } from "sonner"
@@ -16,10 +16,16 @@ import {
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useActiveSubjects } from "@/features/content/catalog-api"
-import { useCreateOwnQuestion, useUpdateOwnQuestion } from "@/features/content/partner-questions-api"
+import {
+  useCreateOwnQuestion,
+  useDeleteOwnQuestionImage,
+  useUpdateOwnQuestion,
+  useUploadOwnQuestionImage,
+} from "@/features/content/partner-questions-api"
 import { partnerQuestionFormSchema, type PartnerQuestionFormValues } from "@/features/content/schemas"
 import { ApiError } from "@/lib/api/errors"
 import { applyServerFieldErrors } from "@/lib/api/form-errors"
+import { ImageUploadField } from "@/pages/admin/image-upload-field"
 
 export interface PartnerQuestionFormDialogProps {
   open: boolean
@@ -32,6 +38,7 @@ export interface PartnerQuestionFormDialogProps {
     correctIndex: number
     explanation: string
     sourceReference: string | null
+    imageUrl: string | null
     status: string
   }
   defaultSubjectId?: string
@@ -59,6 +66,8 @@ export function PartnerQuestionFormDialog({ open, onOpenChange, question, defaul
   const isEditing = question !== undefined
   const createMutation = useCreateOwnQuestion()
   const updateMutation = useUpdateOwnQuestion()
+  const uploadImageMutation = useUploadOwnQuestionImage()
+  const deleteImageMutation = useDeleteOwnQuestionImage()
   const mutation = isEditing ? updateMutation : createMutation
 
   // Qualquer matéria ativa é permitida — sem vínculo por especialidade (PART-RF-002 CA-2).
@@ -69,8 +78,16 @@ export function PartnerQuestionFormDialog({ open, onOpenChange, question, defaul
     defaultValues: defaultValues(question, defaultSubjectId),
   })
 
+  // Estado local pro preview da imagem — a mutation de upload/delete devolve a
+  // pergunta atualizada, mas `question` (prop) só muda quando o diálogo reabre
+  // (mesmo padrão de question-form-dialog.tsx, admin).
+  const [currentImageUrl, setCurrentImageUrl] = useState<string | null>(question?.imageUrl ?? null)
+
   useEffect(() => {
-    if (open) form.reset(defaultValues(question, defaultSubjectId))
+    if (open) {
+      form.reset(defaultValues(question, defaultSubjectId))
+      setCurrentImageUrl(question?.imageUrl ?? null)
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, question?.id])
 
@@ -212,6 +229,22 @@ export function PartnerQuestionFormDialog({ open, onOpenChange, question, defaul
                 </FormItem>
               )}
             />
+
+            {isEditing && (
+              <ImageUploadField
+                imageUrl={currentImageUrl}
+                isUploading={uploadImageMutation.isPending}
+                isDeleting={deleteImageMutation.isPending}
+                onUpload={async (file) => {
+                  const result = (await uploadImageMutation.mutateAsync({ id: question.id, file })) as { image_url: string | null }
+                  setCurrentImageUrl(result.image_url)
+                }}
+                onDelete={async () => {
+                  await deleteImageMutation.mutateAsync(question.id)
+                  setCurrentImageUrl(null)
+                }}
+              />
+            )}
 
             <DialogFooter>
               <Button type="submit" loading={mutation.isPending}>

@@ -25,9 +25,20 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { useActiveSubjects } from "@/features/content/catalog-api"
 import {
   fetchOwnQuestion,
+  useDeleteOwnDraftQuestion,
   useOwnQuestions,
   useSubmitOwnQuestionForReview,
   type OwnQuestionStatusFilter,
@@ -60,6 +71,7 @@ export function PartnerQuestionsPage() {
     { open: false } | { open: true; question?: PartnerQuestionFormDialogProps["question"] }
   >({ open: false })
   const [loadingEditId, setLoadingEditId] = useState<string | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
 
   const { data: subjectsData } = useActiveSubjects()
   const { data, isPending, isError } = useOwnQuestions({
@@ -70,6 +82,7 @@ export function PartnerQuestionsPage() {
     pageSize: PAGE_SIZE,
   })
   const submitMutation = useSubmitOwnQuestionForReview()
+  const deleteMutation = useDeleteOwnDraftQuestion()
 
   async function handleEdit(id: string) {
     setLoadingEditId(id)
@@ -85,6 +98,7 @@ export function PartnerQuestionsPage() {
           correctIndex: question.correct_index,
           explanation: question.explanation,
           sourceReference: question.source_reference,
+          imageUrl: question.image_url,
           status: question.status,
         },
       })
@@ -103,6 +117,19 @@ export function PartnerQuestionsPage() {
     } catch (err) {
       const message = err instanceof ApiError ? err.message : "Não foi possível enviar a pergunta para revisão."
       toast.error(message)
+    }
+  }
+
+  async function handleDelete() {
+    if (!deleteTarget) return
+    try {
+      await deleteMutation.mutateAsync(deleteTarget)
+      toast.success("Rascunho excluído.")
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : "Não foi possível excluir o rascunho."
+      toast.error(message)
+    } finally {
+      setDeleteTarget(null)
     }
   }
 
@@ -195,6 +222,8 @@ export function PartnerQuestionsPage() {
                 // pending_review/archived — só admin mexe (fila de revisão / desarquivar).
                 const canEdit = question.status === "draft" || question.status === "published"
                 const canSubmit = question.status === "draft"
+                // PART-RF-005: só rascunho pode ser excluído pelo parceiro (nunca teve passagem por published).
+                const canDelete = question.status === "draft"
                 return (
                   <TableRow key={question.id}>
                     <TableCell className="max-w-md font-medium">{question.statement_preview}</TableCell>
@@ -211,7 +240,7 @@ export function PartnerQuestionsPage() {
                     <TableCell className="text-muted-foreground">{formatDate(question.published_at)}</TableCell>
                     <TableCell>{question.has_image ? "Sim" : "—"}</TableCell>
                     <TableCell className="text-right">
-                      {(canEdit || canSubmit) && (
+                      {(canEdit || canSubmit || canDelete) && (
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="outline" size="sm" disabled={loadingEditId === question.id}>
@@ -225,6 +254,14 @@ export function PartnerQuestionsPage() {
                             {canSubmit && (
                               <DropdownMenuItem onClick={() => handleSubmitForReview(question.id)}>
                                 Enviar para revisão
+                              </DropdownMenuItem>
+                            )}
+                            {canDelete && (
+                              <DropdownMenuItem
+                                className="text-destructive"
+                                onClick={() => setDeleteTarget(question.id)}
+                              >
+                                Excluir
                               </DropdownMenuItem>
                             )}
                           </DropdownMenuContent>
@@ -273,6 +310,19 @@ export function PartnerQuestionsPage() {
           defaultSubjectId={subjectId === "all" ? undefined : subjectId}
         />
       )}
+
+      <AlertDialog open={deleteTarget !== null} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir rascunho?</AlertDialogTitle>
+            <AlertDialogDescription>Esta ação não pode ser desfeita.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete}>Excluir</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

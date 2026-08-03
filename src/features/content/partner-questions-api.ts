@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { apiClient } from "@/lib/api/client"
-import { unwrap } from "@/lib/api/errors"
+import { unwrap, apiErrorFrom } from "@/lib/api/errors"
+import { env } from "@/lib/env"
 import type { PartnerQuestionFormValues } from "./schemas"
 
 // PART-RF-001 a 008 — área do parceiro (/me/questions, /me/partner/dashboard).
@@ -89,6 +90,58 @@ export function useSubmitOwnQuestionForReview() {
 
   return useMutation({
     mutationFn: (id: string) => unwrap(apiClient.POST("/me/questions/{id}/submit", { params: { path: { id } } })),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: OWN_QUESTIONS_QUERY_KEY })
+    },
+  })
+}
+
+// PART-RF-005 — exclusão hard-delete de rascunho próprio.
+export function useDeleteOwnDraftQuestion() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (id: string) => unwrap(apiClient.DELETE("/me/questions/{id}", { params: { path: { id } } })),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: OWN_QUESTIONS_QUERY_KEY })
+    },
+  })
+}
+
+// PART-RF-006 — upload/exclusão de imagem própria (multipart). Mesmo padrão de
+// features/content/questions-api.ts (admin): fora do contrato tipado do
+// openapi-fetch, o backend registra essas duas rotas fora de `.openapi()`.
+async function imageRequest(method: "POST" | "DELETE", questionId: string, body?: FormData) {
+  const res = await fetch(`${env.API_BASE_URL}/me/questions/${questionId}/image`, {
+    method,
+    credentials: "include",
+    body,
+  })
+  const json = await res.json().catch(() => null)
+  if (!res.ok) throw apiErrorFrom(res.status, json)
+  return json
+}
+
+export function useUploadOwnQuestionImage() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ id, file }: { id: string; file: File }) => {
+      const form = new FormData()
+      form.append("file", file)
+      return imageRequest("POST", id, form)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: OWN_QUESTIONS_QUERY_KEY })
+    },
+  })
+}
+
+export function useDeleteOwnQuestionImage() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (id: string) => imageRequest("DELETE", id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: OWN_QUESTIONS_QUERY_KEY })
     },

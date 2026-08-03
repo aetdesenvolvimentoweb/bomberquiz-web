@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - staging
 
 jobs:
   ci:
@@ -44,17 +43,17 @@ jobs:
 
       - run: bun install --frozen-lockfile
 
-      - name: Build (produção)
-        if: github.ref_name == 'main'
+      - name: Build
         run: bun run build
         env:
           VITE_API_BASE_URL: https://api.bomberquiz.com.br
-
-      - name: Build (staging)
-        if: github.ref_name == 'staging'
-        run: bun run build
-        env:
-          VITE_API_BASE_URL: https://bomberquiz-api-staging.fly.dev
+          # DSN não é segredo (vai embutido no bundle público de qualquer forma).
+          VITE_SENTRY_DSN: ${{ vars.VITE_SENTRY_DSN }}
+          # Habilita o upload de sourcemap (@sentry/vite-plugin em vite.config.ts) —
+          # sem os três, o plugin não entra no build e o passo segue normal.
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: 91f587f1f28c
+          SENTRY_PROJECT: bomberquiz-web
 
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3

@@ -2,6 +2,11 @@ import { describe, expect, it, vi, beforeEach } from "vitest"
 import { act, render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { InstallBanner } from "@/features/pwa/install-banner"
+import { apiClient } from "@/lib/api/client"
+
+vi.mock("@/lib/api/client", () => ({
+  apiClient: { POST: vi.fn().mockResolvedValue({ error: undefined }) },
+}))
 
 const DISMISS_KEY = "bomberquiz:install-prompt-dismissed"
 
@@ -35,6 +40,7 @@ beforeEach(() => {
   localStorage.clear()
   mockMatchMedia(false)
   setUserAgent(chromeUserAgent)
+  vi.mocked(apiClient.POST).mockClear()
 })
 
 describe("InstallBanner", () => {
@@ -54,6 +60,10 @@ describe("InstallBanner", () => {
     await user.click(screen.getByRole("button", { name: "Instalar" }))
 
     expect(event.prompt).toHaveBeenCalled()
+    expect(apiClient.POST).toHaveBeenCalledWith(
+      "/events",
+      expect.objectContaining({ body: expect.objectContaining({ event_type: "pwa_install_accepted" }) }),
+    )
   })
 
   it("mostra instruções manuais no iOS Safari, sem CTA de instalar", () => {
@@ -84,6 +94,10 @@ describe("InstallBanner", () => {
 
     expect(screen.queryByText("Instale o BomberQuiz")).not.toBeInTheDocument()
     expect(localStorage.getItem(DISMISS_KEY)).not.toBeNull()
+    expect(apiClient.POST).toHaveBeenCalledWith(
+      "/events",
+      expect.objectContaining({ body: expect.objectContaining({ event_type: "pwa_install_dismissed" }) }),
+    )
 
     unmount()
     render(<InstallBanner />)

@@ -1,5 +1,5 @@
 import { createBrowserRouter, Outlet } from "react-router-dom"
-import { RequireAuth, RequireGuest, ConsentGate, RequireAdmin } from "@/features/session/guards"
+import { RequireAuth, RequireGuest, ConsentGate, RequireAdmin, RequirePartner } from "@/features/session/guards"
 import { RouteErrorBoundary } from "@/components/route-error-boundary"
 import { RegisterPage } from "@/pages/auth/register-page"
 import { LoginPage } from "@/pages/auth/login-page"
@@ -24,7 +24,9 @@ import { ResultQuizPage } from "@/pages/quiz/result-quiz-page"
 import { HistoryPage } from "@/pages/quiz/history-page"
 import { PerformancePage } from "@/pages/quiz/performance-page"
 import { PanelLayout } from "@/components/panel-layout"
+import { PartnerLayout } from "@/components/partner-layout"
 import { AppLayout } from "@/components/app-layout"
+import { PartnerQuestionsPage } from "@/pages/partner/partner-questions-page"
 
 export const router = createBrowserRouter([
   {
@@ -80,6 +82,15 @@ export const router = createBrowserRouter([
                       { path: "/painel/perguntas", element: <QuestionsPage /> },
                       { path: "/painel/revisao", element: <ReviewQueuePage /> },
                     ],
+                  },
+                ],
+              },
+              {
+                element: <RequirePartner />,
+                children: [
+                  {
+                    element: <PartnerLayout />,
+                    children: [{ path: "/parceiro/perguntas", element: <PartnerQuestionsPage /> }],
                   },
                 ],
               },

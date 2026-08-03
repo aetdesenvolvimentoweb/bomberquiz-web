@@ -12,6 +12,7 @@ export function AppLayout() {
     { to: "/historico", label: "Histórico" },
     { to: "/desempenho", label: "Desempenho" },
     ...(user?.role === "admin" ? [{ to: "/painel/eixos", label: "Painel administrativo" }] : []),
+    ...(user?.role === "partner" ? [{ to: "/parceiro/perguntas", label: "Área do parceiro" }] : []),
   ]
 
   return (

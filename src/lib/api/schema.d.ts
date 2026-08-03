@@ -436,6 +436,93 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/me/questions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Listar as próprias perguntas (parceiro) */
+        get: operations["listOwnQuestions"];
+        put?: never;
+        /** Criar rascunho de pergunta (parceiro) */
+        post: operations["createOwnQuestion"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/questions/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Excluir rascunho próprio (hard-delete) */
+        delete: operations["deleteOwnDraftQuestion"];
+        options?: never;
+        head?: never;
+        /** Editar própria pergunta (publicada volta para revisão) */
+        patch: operations["updateOwnQuestion"];
+        trace?: never;
+    };
+    "/me/questions/{id}/submit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Enviar rascunho para revisão */
+        post: operations["submitOwnQuestionForReview"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/questions/{id}/review-history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Histórico de revisão da própria pergunta (marca como lido) */
+        get: operations["getOwnQuestionReviewHistory"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/partner/dashboard": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Painel/agregados do parceiro */
+        get: operations["getPartnerDashboard"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/quizzes": {
         parameters: {
             query?: never;
@@ -2163,6 +2250,435 @@ export interface operations {
             };
             /** @description Pergunta não encontrada */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    listOwnQuestions: {
+        parameters: {
+            query?: {
+                page?: number;
+                page_size?: number;
+                subject_id?: string;
+                axis_id?: string;
+                status?: string;
+                q?: string;
+                sort?: "updated_at" | "created_at" | "published_at" | "accuracy";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Lista paginada das próprias perguntas */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: {
+                            id: string;
+                            subject_id: string;
+                            subject_name: string;
+                            axis_name: string;
+                            statement_preview: string;
+                            /** @enum {string} */
+                            status: "draft" | "pending_review" | "published" | "archived";
+                            has_image: boolean;
+                            created_at: string;
+                            submitted_at: string | null;
+                            published_at: string | null;
+                            rejection_reason: string | null;
+                            total_answers: number;
+                            accuracy: number;
+                            /** @enum {string} */
+                            difficulty_level: "unrated" | "easy" | "medium" | "hard";
+                        }[];
+                        page: number;
+                        page_size: number;
+                        total: number;
+                    };
+                };
+            };
+            /** @description Não autenticado */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Acesso restrito a parceiros */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    createOwnQuestion: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    subject_id: string;
+                    statement: string;
+                    alternatives: string[];
+                    correct_index: number;
+                    explanation: string;
+                    source_reference?: string;
+                    image_url?: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Rascunho criado */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        id: string;
+                        subject_id: string;
+                        subject_name: string;
+                        axis_name: string;
+                        statement: string;
+                        alternatives: string[];
+                        correct_index: number;
+                        explanation: string;
+                        source_reference: string | null;
+                        image_url: string | null;
+                        /** @enum {string} */
+                        status: "draft" | "pending_review" | "published" | "archived";
+                        /** @enum {string} */
+                        source: "manual" | "ai_bot";
+                        author_id: string;
+                        author_name: string;
+                        created_at: string;
+                        updated_at: string;
+                        published_at: string | null;
+                        archived_at: string | null;
+                        stats_reset_at: string | null;
+                        reviewed_by: string | null;
+                        reviewed_at: string | null;
+                        rejection_reason: string | null;
+                        total_answers: number;
+                        accuracy: number;
+                    };
+                };
+            };
+            /** @description Dados inválidos ou matéria inexistente/arquivada */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Limite de 50 rascunhos em aberto excedido */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    deleteOwnDraftQuestion: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Rascunho excluído */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Pergunta não encontrada ou não pertence ao parceiro */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Só rascunhos podem ser excluídos */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    updateOwnQuestion: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    subject_id?: string;
+                    statement?: string;
+                    alternatives?: string[];
+                    correct_index?: number;
+                    explanation?: string;
+                    source_reference?: string;
+                    image_url?: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Pergunta atualizada */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        id: string;
+                        subject_id: string;
+                        subject_name: string;
+                        axis_name: string;
+                        statement: string;
+                        alternatives: string[];
+                        correct_index: number;
+                        explanation: string;
+                        source_reference: string | null;
+                        image_url: string | null;
+                        /** @enum {string} */
+                        status: "draft" | "pending_review" | "published" | "archived";
+                        /** @enum {string} */
+                        source: "manual" | "ai_bot";
+                        author_id: string;
+                        author_name: string;
+                        created_at: string;
+                        updated_at: string;
+                        published_at: string | null;
+                        archived_at: string | null;
+                        stats_reset_at: string | null;
+                        reviewed_by: string | null;
+                        reviewed_at: string | null;
+                        rejection_reason: string | null;
+                        total_answers: number;
+                        accuracy: number;
+                    };
+                };
+            };
+            /** @description Pergunta não encontrada ou não pertence ao parceiro */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Pergunta em revisão ou arquivada */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Dados inválidos ou matéria destino inexistente/arquivada */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    submitOwnQuestionForReview: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Pergunta enviada para revisão */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        id: string;
+                        subject_id: string;
+                        subject_name: string;
+                        axis_name: string;
+                        statement: string;
+                        alternatives: string[];
+                        correct_index: number;
+                        explanation: string;
+                        source_reference: string | null;
+                        image_url: string | null;
+                        /** @enum {string} */
+                        status: "draft" | "pending_review" | "published" | "archived";
+                        /** @enum {string} */
+                        source: "manual" | "ai_bot";
+                        author_id: string;
+                        author_name: string;
+                        created_at: string;
+                        updated_at: string;
+                        published_at: string | null;
+                        archived_at: string | null;
+                        stats_reset_at: string | null;
+                        reviewed_by: string | null;
+                        reviewed_at: string | null;
+                        rejection_reason: string | null;
+                        total_answers: number;
+                        accuracy: number;
+                    };
+                };
+            };
+            /** @description Pergunta não encontrada ou não pertence ao parceiro */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Pergunta não está em rascunho */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Limite de 30 envios/hora excedido */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    getOwnQuestionReviewHistory: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Timeline cronológica de eventos de revisão */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        event: "submitted" | "approved" | "rejected" | "edit_after_published";
+                        at: string;
+                        by_admin_name: string | null;
+                        notes: string | null;
+                        rejection_reason: string | null;
+                    }[];
+                };
+            };
+            /** @description Pergunta não encontrada ou não pertence ao parceiro */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    getPartnerDashboard: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Agregados do parceiro */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        counts: {
+                            draft: number;
+                            pending_review: number;
+                            published: number;
+                            archived: number;
+                        };
+                        engagement: {
+                            total_answers_received: number;
+                            avg_accuracy: number;
+                        };
+                        by_subject: {
+                            subject_id: string;
+                            subject_name: string;
+                            count_published: number;
+                            total_answers: number;
+                            avg_accuracy: number;
+                        }[];
+                        by_difficulty: {
+                            easy: number;
+                            medium: number;
+                            hard: number;
+                            unrated: number;
+                        };
+                        last_published: {
+                            id: string;
+                            statement_preview: string;
+                            published_at: string;
+                        }[];
+                        last_rejected: {
+                            id: string;
+                            statement_preview: string;
+                            rejection_reason: string;
+                            rejected_at: string;
+                        }[];
+                        unread_review_events: number;
+                    };
+                };
+            };
+            /** @description Não autenticado */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Acesso restrito a parceiros */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };

@@ -44,3 +44,23 @@ export const rejectQuestionFormSchema = z.object({
 })
 
 export type RejectQuestionFormValues = z.infer<typeof rejectQuestionFormSchema>
+
+// Espelha as regras gerais de PART-RF-002/003 (espec/docs/rf/content-partner.md).
+// Igual a questionFormSchema, sem resetStats — parceiro nunca dispara reset de estatísticas (PART-RF-003 CA-6).
+export const partnerQuestionFormSchema = z
+  .object({
+    subjectId: z.string().min(1, "Selecione uma matéria"),
+    statement: z.string().min(10, "Enunciado deve ter ao menos 10 caracteres").max(2000, "Enunciado deve ter no máximo 2.000 caracteres"),
+    alternatives: z
+      .array(z.string().min(1, "Alternativa não pode ser vazia").max(500, "Alternativa deve ter no máximo 500 caracteres"))
+      .length(4),
+    correctIndex: z.coerce.number().int().min(0).max(3),
+    explanation: z.string().min(10, "Justificativa deve ter ao menos 10 caracteres").max(2000, "Justificativa deve ter no máximo 2.000 caracteres"),
+    sourceReference: z.string().max(240, "Fonte deve ter no máximo 240 caracteres").optional(),
+  })
+  .refine(
+    (values) => new Set(values.alternatives.map((a) => a.trim())).size === values.alternatives.length,
+    { message: "Alternativas não podem ser duplicadas", path: ["alternatives"] },
+  )
+
+export type PartnerQuestionFormValues = z.infer<typeof partnerQuestionFormSchema>

@@ -50,3 +50,14 @@ export function RequireAdmin() {
 
   return <Outlet />
 }
+
+/** Bloqueia rotas /parceiro/* para quem não tem role="partner" (Módulo 4 — admin já tem /painel para o mesmo conteúdo). */
+export function RequirePartner() {
+  const { user, isPending, isError, refetch } = useSession()
+
+  if (isPending) return <LoadingScreen />
+  if (isError) return <SessionErrorScreen onRetry={refetch} />
+  if (user?.role !== "partner") return <Navigate to="/inicio" replace />
+
+  return <Outlet />
+}

@@ -321,7 +321,7 @@ describe("PartnerQuestionsPage", () => {
     expect(screen.queryByText("Excluir")).not.toBeInTheDocument()
   })
 
-  it("não mostra ação de enviar para revisão numa pergunta pending_review/archived", async () => {
+  it("pending_review/archived só têm a ação Ver histórico (sem editar/enviar/excluir)", async () => {
     mockGetByPath({
       questions: {
         items: [
@@ -335,10 +335,31 @@ describe("PartnerQuestionsPage", () => {
     })
 
     renderPartnerQuestionsPage()
+    const user = userEvent.setup()
 
     await screen.findByText("Pergunta em revisão")
     await screen.findByText("Pergunta arquivada")
-    // Nenhuma das duas linhas (pending_review/archived) tem ação disponível.
-    expect(screen.queryByRole("button", { name: "Ações" })).not.toBeInTheDocument()
+
+    const [pendingActions, archivedActions] = screen.getAllByRole("button", { name: "Ações" })
+    for (const trigger of [pendingActions, archivedActions]) {
+      await user.click(trigger)
+      expect(await screen.findByText("Ver histórico")).toBeInTheDocument()
+      expect(screen.queryByText("Editar")).not.toBeInTheDocument()
+      expect(screen.queryByText("Enviar para revisão")).not.toBeInTheDocument()
+      expect(screen.queryByText("Excluir")).not.toBeInTheDocument()
+      await user.keyboard("{Escape}")
+    }
+  })
+
+  it("Ver histórico navega para /parceiro/perguntas/:id", async () => {
+    mockGetByPath({ questions: { items: [questionA], page: 1, page_size: 20, total: 1 } })
+
+    renderPartnerQuestionsPage()
+    const user = userEvent.setup()
+
+    await screen.findByText("Qual o procedimento correto para X?")
+    await user.click(screen.getByRole("button", { name: "Ações" }))
+    const link = await screen.findByRole("menuitem", { name: "Ver histórico" })
+    expect(link).toHaveAttribute("href", "/parceiro/perguntas/question-1")
   })
 })

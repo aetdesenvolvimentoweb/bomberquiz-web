@@ -1,6 +1,7 @@
 import { NavShell, type NavItem } from "@/components/nav-shell"
 
 const PARTNER_NAV_ITEMS: NavItem[] = [
+  { to: "/parceiro/inicio", label: "Início" },
   { to: "/parceiro/perguntas", label: "Minhas perguntas" },
 ]
 

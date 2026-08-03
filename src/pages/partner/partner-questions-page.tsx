@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { Link } from "react-router-dom"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -240,33 +241,34 @@ export function PartnerQuestionsPage() {
                     <TableCell className="text-muted-foreground">{formatDate(question.published_at)}</TableCell>
                     <TableCell>{question.has_image ? "Sim" : "—"}</TableCell>
                     <TableCell className="text-right">
-                      {(canEdit || canSubmit || canDelete) && (
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="outline" size="sm" disabled={loadingEditId === question.id}>
-                              Ações
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            {canEdit && (
-                              <DropdownMenuItem onClick={() => handleEdit(question.id)}>Editar</DropdownMenuItem>
-                            )}
-                            {canSubmit && (
-                              <DropdownMenuItem onClick={() => handleSubmitForReview(question.id)}>
-                                Enviar para revisão
-                              </DropdownMenuItem>
-                            )}
-                            {canDelete && (
-                              <DropdownMenuItem
-                                className="text-destructive"
-                                onClick={() => setDeleteTarget(question.id)}
-                              >
-                                Excluir
-                              </DropdownMenuItem>
-                            )}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      )}
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="outline" size="sm" disabled={loadingEditId === question.id}>
+                            Ações
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          {canEdit && (
+                            <DropdownMenuItem onClick={() => handleEdit(question.id)}>Editar</DropdownMenuItem>
+                          )}
+                          {canSubmit && (
+                            <DropdownMenuItem onClick={() => handleSubmitForReview(question.id)}>
+                              Enviar para revisão
+                            </DropdownMenuItem>
+                          )}
+                          <DropdownMenuItem asChild>
+                            <Link to={`/parceiro/perguntas/${question.id}`}>Ver histórico</Link>
+                          </DropdownMenuItem>
+                          {canDelete && (
+                            <DropdownMenuItem
+                              className="text-destructive"
+                              onClick={() => setDeleteTarget(question.id)}
+                            >
+                              Excluir
+                            </DropdownMenuItem>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableCell>
                   </TableRow>
                 )

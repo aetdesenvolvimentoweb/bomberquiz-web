@@ -27,6 +27,8 @@ import { PanelLayout } from "@/components/panel-layout"
 import { PartnerLayout } from "@/components/partner-layout"
 import { AppLayout } from "@/components/app-layout"
 import { PartnerQuestionsPage } from "@/pages/partner/partner-questions-page"
+import { PartnerDashboardPage } from "@/pages/partner/partner-dashboard-page"
+import { PartnerQuestionDetailPage } from "@/pages/partner/partner-question-detail-page"
 
 export const router = createBrowserRouter([
   {
@@ -90,7 +92,11 @@ export const router = createBrowserRouter([
                 children: [
                   {
                     element: <PartnerLayout />,
-                    children: [{ path: "/parceiro/perguntas", element: <PartnerQuestionsPage /> }],
+                    children: [
+                      { path: "/parceiro/inicio", element: <PartnerDashboardPage /> },
+                      { path: "/parceiro/perguntas", element: <PartnerQuestionsPage /> },
+                      { path: "/parceiro/perguntas/:id", element: <PartnerQuestionDetailPage /> },
+                    ],
                   },
                 ],
               },

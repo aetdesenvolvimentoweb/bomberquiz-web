@@ -73,6 +73,14 @@ export function fetchOwnQuestion(id: string) {
   return unwrap(apiClient.GET("/me/questions/{id}", { params: { path: { id } } }))
 }
 
+/** Mesmo endpoint de fetchOwnQuestion, como useQuery reativo — usado pela página de histórico (PART-RF-007). */
+export function useOwnQuestion(id: string) {
+  return useQuery({
+    queryKey: ["content", "own-questions", "detail", id],
+    queryFn: () => fetchOwnQuestion(id),
+  })
+}
+
 export function useUpdateOwnQuestion() {
   const queryClient = useQueryClient()
 
@@ -145,5 +153,25 @@ export function useDeleteOwnQuestionImage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: OWN_QUESTIONS_QUERY_KEY })
     },
+  })
+}
+
+// PART-RF-007 — histórico de revisão. Consultar já marca os eventos como lidos
+// no backend (CA-4) — quem chama deve invalidar DASHBOARD_QUERY_KEY depois de
+// carregar, pra refletir o `unread_review_events` zerado sem esperar um reload.
+export const DASHBOARD_QUERY_KEY = ["content", "partner-dashboard"] as const
+
+export function useOwnQuestionReviewHistory(id: string) {
+  return useQuery({
+    queryKey: ["content", "own-question-review-history", id],
+    queryFn: () => unwrap(apiClient.GET("/me/questions/{id}/review-history", { params: { path: { id } } })),
+  })
+}
+
+// PART-RF-008 — dashboard do parceiro.
+export function usePartnerDashboard() {
+  return useQuery({
+    queryKey: DASHBOARD_QUERY_KEY,
+    queryFn: () => unwrap(apiClient.GET("/me/partner/dashboard")),
   })
 }

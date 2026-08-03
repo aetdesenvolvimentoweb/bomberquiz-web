@@ -16,7 +16,7 @@ import {
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useActiveSubjects } from "@/features/content/catalog-api"
-import { useCreateOwnQuestion } from "@/features/content/partner-questions-api"
+import { useCreateOwnQuestion, useUpdateOwnQuestion } from "@/features/content/partner-questions-api"
 import { partnerQuestionFormSchema, type PartnerQuestionFormValues } from "@/features/content/schemas"
 import { ApiError } from "@/lib/api/errors"
 import { applyServerFieldErrors } from "@/lib/api/form-errors"
@@ -24,47 +24,69 @@ import { applyServerFieldErrors } from "@/lib/api/form-errors"
 export interface PartnerQuestionFormDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+  question?: {
+    id: string
+    subjectId: string
+    statement: string
+    alternatives: string[]
+    correctIndex: number
+    explanation: string
+    sourceReference: string | null
+    status: string
+  }
   defaultSubjectId?: string
 }
 
 const emptyAlternatives: [string, string, string, string] = ["", "", "", ""]
 
-function defaultValues(defaultSubjectId?: string): PartnerQuestionFormValues {
+function defaultValues(question?: PartnerQuestionFormDialogProps["question"], defaultSubjectId?: string): PartnerQuestionFormValues {
   return {
-    subjectId: defaultSubjectId ?? "",
-    statement: "",
-    alternatives: emptyAlternatives,
-    correctIndex: 0,
-    explanation: "",
-    sourceReference: "",
+    subjectId: question?.subjectId ?? defaultSubjectId ?? "",
+    statement: question?.statement ?? "",
+    alternatives: (question?.alternatives as [string, string, string, string]) ?? emptyAlternatives,
+    correctIndex: question?.correctIndex ?? 0,
+    explanation: question?.explanation ?? "",
+    sourceReference: question?.sourceReference ?? "",
   }
 }
 
-/** Cria rascunho de pergunta própria (PART-RF-002) — toda pergunta nasce em draft, nunca publicada direto. */
-export function PartnerQuestionFormDialog({ open, onOpenChange, defaultSubjectId }: PartnerQuestionFormDialogProps) {
+/**
+ * Cria rascunho (PART-RF-002) ou edita pergunta própria (PART-RF-003) — toda
+ * pergunta nova nasce em draft, nunca publicada direto. Editar uma pergunta
+ * `published` devolve para `pending_review` (CA-3) — aviso explícito no formulário.
+ */
+export function PartnerQuestionFormDialog({ open, onOpenChange, question, defaultSubjectId }: PartnerQuestionFormDialogProps) {
+  const isEditing = question !== undefined
   const createMutation = useCreateOwnQuestion()
+  const updateMutation = useUpdateOwnQuestion()
+  const mutation = isEditing ? updateMutation : createMutation
 
   // Qualquer matéria ativa é permitida — sem vínculo por especialidade (PART-RF-002 CA-2).
   const { data: subjectsData } = useActiveSubjects()
 
   const form = useForm<PartnerQuestionFormValues>({
     resolver: zodResolver(partnerQuestionFormSchema),
-    defaultValues: defaultValues(defaultSubjectId),
+    defaultValues: defaultValues(question, defaultSubjectId),
   })
 
   useEffect(() => {
-    if (open) form.reset(defaultValues(defaultSubjectId))
+    if (open) form.reset(defaultValues(question, defaultSubjectId))
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open])
+  }, [open, question?.id])
 
   async function onSubmit(values: PartnerQuestionFormValues) {
     try {
-      await createMutation.mutateAsync(values)
-      toast.success("Rascunho criado.")
+      if (isEditing) {
+        await updateMutation.mutateAsync({ id: question.id, values })
+        toast.success(question.status === "published" ? "Pergunta atualizada e enviada para revisão." : "Rascunho atualizado.")
+      } else {
+        await createMutation.mutateAsync(values)
+        toast.success("Rascunho criado.")
+      }
       onOpenChange(false)
     } catch (err) {
       if (applyServerFieldErrors(form, err)) return
-      const message = err instanceof ApiError ? err.message : "Não foi possível criar o rascunho."
+      const message = err instanceof ApiError ? err.message : "Não foi possível salvar a pergunta."
       toast.error(message)
     }
   }
@@ -75,11 +97,19 @@ export function PartnerQuestionFormDialog({ open, onOpenChange, defaultSubjectId
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Nova pergunta</DialogTitle>
+          <DialogTitle>{isEditing ? "Editar pergunta" : "Nova pergunta"}</DialogTitle>
           <DialogDescription>
-            Cria um rascunho — quando estiver pronto, envie para revisão na lista de perguntas.
+            {isEditing
+              ? "Atualize os dados da pergunta."
+              : "Cria um rascunho — quando estiver pronto, envie para revisão na lista de perguntas."}
           </DialogDescription>
         </DialogHeader>
+
+        {isEditing && question.status === "published" && (
+          <p className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+            Esta pergunta voltará para revisão e ficará indisponível para clientes até a nova aprovação.
+          </p>
+        )}
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -184,8 +214,8 @@ export function PartnerQuestionFormDialog({ open, onOpenChange, defaultSubjectId
             />
 
             <DialogFooter>
-              <Button type="submit" loading={createMutation.isPending}>
-                Salvar rascunho
+              <Button type="submit" loading={mutation.isPending}>
+                {isEditing ? "Salvar" : "Salvar rascunho"}
               </Button>
             </DialogFooter>
           </form>

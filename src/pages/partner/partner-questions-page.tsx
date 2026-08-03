@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
@@ -18,9 +19,21 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { useActiveSubjects } from "@/features/content/catalog-api"
-import { useOwnQuestions, type OwnQuestionStatusFilter } from "@/features/content/partner-questions-api"
-import { PartnerQuestionFormDialog } from "./partner-question-form-dialog"
+import {
+  fetchOwnQuestion,
+  useOwnQuestions,
+  useSubmitOwnQuestionForReview,
+  type OwnQuestionStatusFilter,
+} from "@/features/content/partner-questions-api"
+import { PartnerQuestionFormDialog, type PartnerQuestionFormDialogProps } from "./partner-question-form-dialog"
+import { ApiError } from "@/lib/api/errors"
 
 const PAGE_SIZE = 20
 
@@ -43,7 +56,10 @@ export function PartnerQuestionsPage() {
   const [status, setStatus] = useState<OwnQuestionStatusFilter>("all")
   const [q, setQ] = useState("")
   const [page, setPage] = useState(1)
-  const [createOpen, setCreateOpen] = useState(false)
+  const [dialogState, setDialogState] = useState<
+    { open: false } | { open: true; question?: PartnerQuestionFormDialogProps["question"] }
+  >({ open: false })
+  const [loadingEditId, setLoadingEditId] = useState<string | null>(null)
 
   const { data: subjectsData } = useActiveSubjects()
   const { data, isPending, isError } = useOwnQuestions({
@@ -53,6 +69,42 @@ export function PartnerQuestionsPage() {
     page,
     pageSize: PAGE_SIZE,
   })
+  const submitMutation = useSubmitOwnQuestionForReview()
+
+  async function handleEdit(id: string) {
+    setLoadingEditId(id)
+    try {
+      const question = await fetchOwnQuestion(id)
+      setDialogState({
+        open: true,
+        question: {
+          id: question.id,
+          subjectId: question.subject_id,
+          statement: question.statement,
+          alternatives: question.alternatives,
+          correctIndex: question.correct_index,
+          explanation: question.explanation,
+          sourceReference: question.source_reference,
+          status: question.status,
+        },
+      })
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : "Não foi possível carregar a pergunta."
+      toast.error(message)
+    } finally {
+      setLoadingEditId(null)
+    }
+  }
+
+  async function handleSubmitForReview(id: string) {
+    try {
+      await submitMutation.mutateAsync(id)
+      toast.success("Pergunta enviada para revisão.")
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : "Não foi possível enviar a pergunta para revisão."
+      toast.error(message)
+    }
+  }
 
   const totalPages = data ? Math.max(1, Math.ceil(data.total / PAGE_SIZE)) : 1
   const subjectOptions = subjectsData?.items ?? []
@@ -64,7 +116,7 @@ export function PartnerQuestionsPage() {
           <h1 className="text-2xl font-semibold">Minhas perguntas</h1>
           <p className="text-sm text-muted-foreground">Perguntas cadastradas por você, em todos os status.</p>
         </div>
-        <Button onClick={() => setCreateOpen(true)}>Nova pergunta</Button>
+        <Button onClick={() => setDialogState({ open: true })}>Nova pergunta</Button>
       </div>
 
       <div className="flex flex-wrap gap-3">
@@ -127,33 +179,61 @@ export function PartnerQuestionsPage() {
                 <TableHead>Enviada em</TableHead>
                 <TableHead>Publicada em</TableHead>
                 <TableHead>Imagem</TableHead>
+                <TableHead className="text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {data.items.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center text-sm text-muted-foreground">
+                  <TableCell colSpan={7} className="text-center text-sm text-muted-foreground">
                     Nenhuma pergunta encontrada.
                   </TableCell>
                 </TableRow>
               )}
-              {data.items.map((question) => (
-                <TableRow key={question.id}>
-                  <TableCell className="max-w-md font-medium">{question.statement_preview}</TableCell>
-                  <TableCell className="text-muted-foreground">{question.subject_name}</TableCell>
-                  <TableCell className="space-x-2">
-                    <Badge variant={question.status === "published" ? "success" : "secondary"}>
-                      {STATUS_LABELS[question.status] ?? question.status}
-                    </Badge>
-                    {question.status === "draft" && question.rejection_reason && (
-                      <Badge variant="destructive">Rejeitada</Badge>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">{formatDate(question.submitted_at)}</TableCell>
-                  <TableCell className="text-muted-foreground">{formatDate(question.published_at)}</TableCell>
-                  <TableCell>{question.has_image ? "Sim" : "—"}</TableCell>
-                </TableRow>
-              ))}
+              {data.items.map((question) => {
+                // PART-RF-003: editável em draft/published (published dispara resubmissão, aviso no diálogo).
+                // pending_review/archived — só admin mexe (fila de revisão / desarquivar).
+                const canEdit = question.status === "draft" || question.status === "published"
+                const canSubmit = question.status === "draft"
+                return (
+                  <TableRow key={question.id}>
+                    <TableCell className="max-w-md font-medium">{question.statement_preview}</TableCell>
+                    <TableCell className="text-muted-foreground">{question.subject_name}</TableCell>
+                    <TableCell className="space-x-2">
+                      <Badge variant={question.status === "published" ? "success" : "secondary"}>
+                        {STATUS_LABELS[question.status] ?? question.status}
+                      </Badge>
+                      {question.status === "draft" && question.rejection_reason && (
+                        <Badge variant="destructive">Rejeitada</Badge>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">{formatDate(question.submitted_at)}</TableCell>
+                    <TableCell className="text-muted-foreground">{formatDate(question.published_at)}</TableCell>
+                    <TableCell>{question.has_image ? "Sim" : "—"}</TableCell>
+                    <TableCell className="text-right">
+                      {(canEdit || canSubmit) && (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="outline" size="sm" disabled={loadingEditId === question.id}>
+                              Ações
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            {canEdit && (
+                              <DropdownMenuItem onClick={() => handleEdit(question.id)}>Editar</DropdownMenuItem>
+                            )}
+                            {canSubmit && (
+                              <DropdownMenuItem onClick={() => handleSubmitForReview(question.id)}>
+                                Enviar para revisão
+                              </DropdownMenuItem>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                )
+              })}
             </TableBody>
           </Table>
 
@@ -185,11 +265,14 @@ export function PartnerQuestionsPage() {
         </>
       )}
 
-      <PartnerQuestionFormDialog
-        open={createOpen}
-        onOpenChange={setCreateOpen}
-        defaultSubjectId={subjectId === "all" ? undefined : subjectId}
-      />
+      {dialogState.open && (
+        <PartnerQuestionFormDialog
+          open={dialogState.open}
+          onOpenChange={(open) => setDialogState(open ? dialogState : { open: false })}
+          question={dialogState.question}
+          defaultSubjectId={subjectId === "all" ? undefined : subjectId}
+        />
+      )}
     </div>
   )
 }

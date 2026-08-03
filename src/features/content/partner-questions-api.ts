@@ -66,3 +66,31 @@ export function useCreateOwnQuestion() {
     },
   })
 }
+
+/** Detalhe completo (não o preview de useOwnQuestions) — usado antes de abrir o diálogo de edição (PART-RF-003). */
+export function fetchOwnQuestion(id: string) {
+  return unwrap(apiClient.GET("/me/questions/{id}", { params: { path: { id } } }))
+}
+
+export function useUpdateOwnQuestion() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({ id, values }: { id: string; values: PartnerQuestionFormValues }) =>
+      unwrap(apiClient.PATCH("/me/questions/{id}", { params: { path: { id } }, body: toBody(values) })),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: OWN_QUESTIONS_QUERY_KEY })
+    },
+  })
+}
+
+export function useSubmitOwnQuestionForReview() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (id: string) => unwrap(apiClient.POST("/me/questions/{id}/submit", { params: { path: { id } } })),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: OWN_QUESTIONS_QUERY_KEY })
+    },
+  })
+}

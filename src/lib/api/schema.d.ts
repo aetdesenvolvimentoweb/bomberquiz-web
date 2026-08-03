@@ -461,7 +461,8 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /** Detalhe completo da própria pergunta */
+        get: operations["getOwnQuestion"];
         put?: never;
         post?: never;
         /** Excluir rascunho próprio (hard-delete) */
@@ -2387,6 +2388,62 @@ export interface operations {
             };
             /** @description Limite de 50 rascunhos em aberto excedido */
             429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    getOwnQuestion: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Pergunta */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        id: string;
+                        subject_id: string;
+                        subject_name: string;
+                        axis_name: string;
+                        statement: string;
+                        alternatives: string[];
+                        correct_index: number;
+                        explanation: string;
+                        source_reference: string | null;
+                        image_url: string | null;
+                        /** @enum {string} */
+                        status: "draft" | "pending_review" | "published" | "archived";
+                        /** @enum {string} */
+                        source: "manual" | "ai_bot";
+                        author_id: string;
+                        author_name: string;
+                        created_at: string;
+                        updated_at: string;
+                        published_at: string | null;
+                        archived_at: string | null;
+                        stats_reset_at: string | null;
+                        reviewed_by: string | null;
+                        reviewed_at: string | null;
+                        rejection_reason: string | null;
+                        total_answers: number;
+                        accuracy: number;
+                    };
+                };
+            };
+            /** @description Pergunta não encontrada ou não pertence ao parceiro */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };

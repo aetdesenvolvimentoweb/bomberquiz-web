@@ -10,6 +10,7 @@ vi.mock("@/lib/api/client", () => ({
   apiClient: {
     GET: vi.fn(),
     POST: vi.fn(),
+    PATCH: vi.fn(),
   },
 }))
 
@@ -21,6 +22,7 @@ vi.mock("sonner", () => ({
 const mockedApiClient = apiClient as unknown as {
   GET: ReturnType<typeof vi.fn>
   POST: ReturnType<typeof vi.fn>
+  PATCH: ReturnType<typeof vi.fn>
 }
 
 function renderPartnerQuestionsPage() {
@@ -53,7 +55,34 @@ const questionA = {
   difficulty_level: "unrated" as const,
 }
 
-function mockGetByPath(responses: { subjects?: unknown; questions?: unknown }) {
+const questionADetail = {
+  id: "question-1",
+  subject_id: "subject-1",
+  subject_name: "Primeiros Socorros",
+  axis_name: "Salvamento",
+  statement: "Qual o procedimento correto para X?",
+  alternatives: ["Alternativa A", "Alternativa B", "Alternativa C", "Alternativa D"],
+  correct_index: 0,
+  explanation: "Porque a norma exige esse procedimento.",
+  source_reference: null,
+  image_url: null,
+  status: "draft" as const,
+  source: "manual" as const,
+  author_id: "partner-1",
+  author_name: "Parceiro Teste",
+  created_at: "2026-01-01T00:00:00.000Z",
+  updated_at: "2026-01-01T00:00:00.000Z",
+  published_at: null,
+  archived_at: null,
+  stats_reset_at: null,
+  reviewed_by: null,
+  reviewed_at: null,
+  rejection_reason: null,
+  total_answers: 0,
+  accuracy: 0,
+}
+
+function mockGetByPath(responses: { subjects?: unknown; questions?: unknown; questionDetail?: unknown }) {
   mockedApiClient.GET.mockImplementation((path: string) => {
     if (path === "/subjects") {
       return Promise.resolve({
@@ -69,6 +98,13 @@ function mockGetByPath(responses: { subjects?: unknown; questions?: unknown }) {
         response: new Response(null, { status: 200 }),
       })
     }
+    if (path === "/me/questions/{id}") {
+      return Promise.resolve({
+        data: responses.questionDetail ?? questionADetail,
+        error: undefined,
+        response: new Response(null, { status: 200 }),
+      })
+    }
     throw new Error(`GET não mockado para o path: ${path}`)
   })
 }
@@ -76,6 +112,7 @@ function mockGetByPath(responses: { subjects?: unknown; questions?: unknown }) {
 beforeEach(() => {
   mockedApiClient.GET.mockReset()
   mockedApiClient.POST.mockReset()
+  mockedApiClient.PATCH.mockReset()
 })
 
 describe("PartnerQuestionsPage", () => {
@@ -162,5 +199,103 @@ describe("PartnerQuestionsPage", () => {
 
     expect(await within(dialog).findByText("Alternativas não podem ser duplicadas")).toBeInTheDocument()
     expect(apiClient.POST).not.toHaveBeenCalled()
+  })
+
+  it("edita um rascunho pelo diálogo (PART-RF-003)", async () => {
+    mockGetByPath({ questions: { items: [questionA], page: 1, page_size: 20, total: 1 } })
+    mockedApiClient.PATCH.mockResolvedValue({
+      data: { ...questionADetail, statement: "Enunciado revisado" },
+      error: undefined,
+      response: new Response(null, { status: 200 }),
+    })
+
+    renderPartnerQuestionsPage()
+    const user = userEvent.setup()
+
+    await screen.findByText("Qual o procedimento correto para X?")
+    await user.click(screen.getByRole("button", { name: "Ações" }))
+    await user.click(await screen.findByText("Editar"))
+
+    const dialog = await screen.findByRole("dialog")
+    expect(within(dialog).getByText("Editar pergunta")).toBeInTheDocument()
+    const statementField = within(dialog).getByLabelText("Enunciado")
+    await user.clear(statementField)
+    await user.type(statementField, "Enunciado revisado com mais detalhe")
+    await user.click(within(dialog).getByRole("button", { name: "Salvar" }))
+
+    await waitFor(() =>
+      expect(apiClient.PATCH).toHaveBeenCalledWith(
+        "/me/questions/{id}",
+        expect.objectContaining({
+          params: { path: { id: "question-1" } },
+          body: expect.objectContaining({ statement: "Enunciado revisado com mais detalhe" }),
+        }),
+      ),
+    )
+  })
+
+  it("mostra aviso de resubmissão ao editar pergunta publicada (CA-3)", async () => {
+    mockGetByPath({
+      questions: { items: [{ ...questionA, status: "published" }], page: 1, page_size: 20, total: 1 },
+      questionDetail: { ...questionADetail, status: "published" },
+    })
+
+    renderPartnerQuestionsPage()
+    const user = userEvent.setup()
+
+    await screen.findByText("Qual o procedimento correto para X?")
+    await user.click(screen.getByRole("button", { name: "Ações" }))
+    await user.click(await screen.findByText("Editar"))
+
+    const dialog = await screen.findByRole("dialog")
+    expect(
+      await within(dialog).findByText(
+        "Esta pergunta voltará para revisão e ficará indisponível para clientes até a nova aprovação.",
+      ),
+    ).toBeInTheDocument()
+  })
+
+  it("envia rascunho para revisão pelo menu de ações (PART-RF-004)", async () => {
+    mockGetByPath({ questions: { items: [questionA], page: 1, page_size: 20, total: 1 } })
+    mockedApiClient.POST.mockResolvedValue({
+      data: { ...questionADetail, status: "pending_review" },
+      error: undefined,
+      response: new Response(null, { status: 200 }),
+    })
+
+    renderPartnerQuestionsPage()
+    const user = userEvent.setup()
+
+    await screen.findByText("Qual o procedimento correto para X?")
+    await user.click(screen.getByRole("button", { name: "Ações" }))
+    await user.click(await screen.findByText("Enviar para revisão"))
+
+    await waitFor(() =>
+      expect(apiClient.POST).toHaveBeenCalledWith(
+        "/me/questions/{id}/submit",
+        expect.objectContaining({ params: { path: { id: "question-1" } } }),
+      ),
+    )
+  })
+
+  it("não mostra ação de enviar para revisão numa pergunta pending_review/archived", async () => {
+    mockGetByPath({
+      questions: {
+        items: [
+          { ...questionA, id: "q-pending", status: "pending_review", statement_preview: "Pergunta em revisão" },
+          { ...questionA, id: "q-archived", status: "archived", statement_preview: "Pergunta arquivada" },
+        ],
+        page: 1,
+        page_size: 20,
+        total: 2,
+      },
+    })
+
+    renderPartnerQuestionsPage()
+
+    await screen.findByText("Pergunta em revisão")
+    await screen.findByText("Pergunta arquivada")
+    // Nenhuma das duas linhas (pending_review/archived) tem ação disponível.
+    expect(screen.queryByRole("button", { name: "Ações" })).not.toBeInTheDocument()
   })
 })

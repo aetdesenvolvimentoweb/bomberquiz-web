@@ -11,6 +11,7 @@ vi.mock("@/lib/api/client", () => ({
     GET: vi.fn(),
     POST: vi.fn(),
     PATCH: vi.fn(),
+    DELETE: vi.fn(),
   },
 }))
 
@@ -23,6 +24,7 @@ const mockedApiClient = apiClient as unknown as {
   GET: ReturnType<typeof vi.fn>
   POST: ReturnType<typeof vi.fn>
   PATCH: ReturnType<typeof vi.fn>
+  DELETE: ReturnType<typeof vi.fn>
 }
 
 function renderPartnerQuestionsPage() {
@@ -113,6 +115,7 @@ beforeEach(() => {
   mockedApiClient.GET.mockReset()
   mockedApiClient.POST.mockReset()
   mockedApiClient.PATCH.mockReset()
+  mockedApiClient.DELETE.mockReset()
 })
 
 describe("PartnerQuestionsPage", () => {
@@ -276,6 +279,46 @@ describe("PartnerQuestionsPage", () => {
         expect.objectContaining({ params: { path: { id: "question-1" } } }),
       ),
     )
+  })
+
+  it("exclui um rascunho após confirmação (PART-RF-005)", async () => {
+    mockGetByPath({ questions: { items: [questionA], page: 1, page_size: 20, total: 1 } })
+    mockedApiClient.DELETE.mockResolvedValue({
+      data: undefined,
+      error: undefined,
+      response: new Response(null, { status: 204 }),
+    })
+
+    renderPartnerQuestionsPage()
+    const user = userEvent.setup()
+
+    await screen.findByText("Qual o procedimento correto para X?")
+    await user.click(screen.getByRole("button", { name: "Ações" }))
+    await user.click(await screen.findByText("Excluir"))
+
+    const alert = await screen.findByRole("dialog")
+    expect(within(alert).getByText("Excluir rascunho?")).toBeInTheDocument()
+    await user.click(within(alert).getByRole("button", { name: "Excluir" }))
+
+    await waitFor(() =>
+      expect(apiClient.DELETE).toHaveBeenCalledWith(
+        "/me/questions/{id}",
+        expect.objectContaining({ params: { path: { id: "question-1" } } }),
+      ),
+    )
+  })
+
+  it("não mostra ação de excluir numa pergunta publicada", async () => {
+    mockGetByPath({ questions: { items: [{ ...questionA, status: "published" }], page: 1, page_size: 20, total: 1 } })
+
+    renderPartnerQuestionsPage()
+    const user = userEvent.setup()
+
+    await screen.findByText("Qual o procedimento correto para X?")
+    await user.click(screen.getByRole("button", { name: "Ações" }))
+
+    expect(await screen.findByText("Editar")).toBeInTheDocument()
+    expect(screen.queryByText("Excluir")).not.toBeInTheDocument()
   })
 
   it("não mostra ação de enviar para revisão numa pergunta pending_review/archived", async () => {

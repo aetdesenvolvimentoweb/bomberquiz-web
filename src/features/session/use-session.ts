@@ -29,8 +29,12 @@ export const SESSION_QUERY_KEY = ["session", "me"] as const
 async function fetchSession(): Promise<SessionData> {
   const { data, error, response } = await apiClient.GET("/me")
 
-  // Sem sessão ativa é um estado válido (usuário deslogado), não um erro de carregamento.
   if (response.status === 401) {
+    const apiError = error !== undefined ? apiErrorFrom(response.status, error) : null
+    // "session_replaced" (PROF-RF-010) não é o estado normal de deslogado — precisa
+    // virar erro de query para acionar o onError global (toast + limpeza de sessão
+    // em web/src/app/app.tsx). Qualquer outro 401 é só "sem sessão ativa", estado válido.
+    if (apiError?.code === "session_replaced") throw apiError
     return { user: null, requiresConsentRenewal: false }
   }
   if (error !== undefined) throw apiErrorFrom(response.status, error)
@@ -44,6 +48,8 @@ export function useSession() {
     queryFn: fetchSession,
     retry: false,
     staleTime: 60_000,
+    refetchOnWindowFocus: true,
+    refetchInterval: 60_000,
   })
 
   return {

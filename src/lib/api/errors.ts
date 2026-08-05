@@ -49,11 +49,18 @@ export function apiErrorFrom(status: number, error: unknown): ApiError {
   return new ApiError(status, result.success ? result.data : null)
 }
 
-/** Extrai `data` de uma chamada openapi-fetch, lançando ApiError em caso de falha. */
+/**
+ * Extrai `data` de uma chamada openapi-fetch, lançando ApiError em caso de
+ * falha. Checa `response.ok` em vez de só `error !== undefined`: para
+ * respostas não-2xx com corpo vazio (Content-Length: 0 — o caso de 401/403/429
+ * do login, documentados como `content?: never` no schema), o openapi-fetch
+ * devolve `{ error: undefined, response }`, então depender só de `error`
+ * deixaria esse erro passar como se fosse sucesso.
+ */
 export async function unwrap<T>(
   call: Promise<{ data?: T; error?: unknown; response: Response }>,
 ): Promise<T> {
   const { data, error, response } = await call
-  if (error !== undefined) throw apiErrorFrom(response.status, error)
+  if (!response.ok) throw apiErrorFrom(response.status, error)
   return data as T
 }

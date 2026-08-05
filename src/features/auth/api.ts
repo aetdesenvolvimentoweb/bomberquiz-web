@@ -28,8 +28,14 @@ export function useLogin() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (values: { email: string; password: string }) =>
-      unwrap(apiClient.POST("/auth/login", { body: values })),
+    mutationFn: async (values: { email: string; password: string }) => {
+      const data = await unwrap(apiClient.POST("/auth/login", { body: values }))
+      // Guarda contra um 2xx malformado/sem corpo sendo tratado como login
+      // bem-sucedido — não deveria acontecer, mas se acontecer não deve
+      // silenciosamente "logar" um usuário sem dados.
+      if (!data?.user) throw new Error("Resposta de login inválida.")
+      return data
+    },
     onSuccess: (data) => {
       queryClient.setQueryData(SESSION_QUERY_KEY, {
         user: data.user,

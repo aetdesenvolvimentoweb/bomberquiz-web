@@ -47,11 +47,16 @@ export function useSession() {
     queryKey: SESSION_QUERY_KEY,
     queryFn: fetchSession,
     retry: false,
-    // 5min: cada refetch é um GET /me contra a API (VM única de 256MB no Fly);
-    // o refetchOnWindowFocus já cobre o caso "voltei pra aba, ainda estou logado?".
-    staleTime: 300_000,
+    // 75s: PROF-RF-010 (sessão única) — cookieCache do Better-Auth
+    // (better-auth.ts) só reconfere no banco a cada 60s; 75s garante que
+    // cada refetch periódico normalmente já pega o cache expirado, então
+    // "fui desconectado por outro dispositivo" aparece em ~75s no pior caso,
+    // não em até 5min. Custo aceito: mais GET /me de fundo por aba aberta,
+    // mas a maioria é respondida pelo próprio cache (sem ida ao Postgres).
+    // refetchOnWindowFocus continua cobrindo o caso "voltei pra aba".
+    staleTime: 75_000,
     refetchOnWindowFocus: true,
-    refetchInterval: 300_000,
+    refetchInterval: 75_000,
   })
 
   return {

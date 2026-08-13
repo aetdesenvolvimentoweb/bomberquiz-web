@@ -47,9 +47,11 @@ export function useSession() {
     queryKey: SESSION_QUERY_KEY,
     queryFn: fetchSession,
     retry: false,
-    staleTime: 60_000,
+    // 5min: cada refetch é um GET /me contra a API (VM única de 256MB no Fly);
+    // o refetchOnWindowFocus já cobre o caso "voltei pra aba, ainda estou logado?".
+    staleTime: 300_000,
     refetchOnWindowFocus: true,
-    refetchInterval: 60_000,
+    refetchInterval: 300_000,
   })
 
   return {

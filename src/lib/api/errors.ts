@@ -19,6 +19,9 @@ const ErrorEnvelopeSchema = z.object({
 export type ApiErrorField = z.infer<typeof ErrorFieldSchema>
 type ErrorEnvelope = z.infer<typeof ErrorEnvelopeSchema>
 
+const SERVER_UNAVAILABLE_MESSAGE =
+  "Servidor indisponível no momento. Tente novamente em instantes."
+
 /** Erro tipado a partir do envelope padrão da API (ver arquitetura.md § Formato padronizado de resposta de erro). */
 export class ApiError extends Error {
   readonly status: number
@@ -27,10 +30,14 @@ export class ApiError extends Error {
   readonly fields?: ApiErrorField[]
   readonly requestId?: string
 
-  constructor(status: number, body: ErrorEnvelope | null) {
-    super(body?.error.message ?? "Erro inesperado. Tente novamente.")
+  constructor(
+    status: number,
+    body: ErrorEnvelope | null,
+    fallback?: { code: string; message: string },
+  ) {
+    super(body?.error.message ?? fallback?.message ?? "Erro inesperado. Tente novamente.")
     this.status = status
-    this.code = body?.error.code ?? "unknown_error"
+    this.code = body?.error.code ?? fallback?.code ?? "unknown_error"
     this.details = body?.error.details
     this.fields = body?.error.fields
     this.requestId = body?.error.request_id
@@ -46,7 +53,17 @@ export class ApiError extends Error {
  */
 export function apiErrorFrom(status: number, error: unknown): ApiError {
   const result = ErrorEnvelopeSchema.safeParse(error)
-  return new ApiError(status, result.success ? result.data : null)
+  if (result.success) return new ApiError(status, result.data)
+  // 502/504 vêm do proxy do Fly quando o processo da API morreu/está
+  // reiniciando — o corpo é uma página HTML, não o envelope JSON. 503 sem
+  // envelope idem. Sem este branch o usuário via o genérico "Erro inesperado".
+  if (status === 502 || status === 503 || status === 504) {
+    return new ApiError(status, null, {
+      code: "server_unavailable",
+      message: SERVER_UNAVAILABLE_MESSAGE,
+    })
+  }
+  return new ApiError(status, null)
 }
 
 /**
@@ -60,7 +77,18 @@ export function apiErrorFrom(status: number, error: unknown): ApiError {
 export async function unwrap<T>(
   call: Promise<{ data?: T; error?: unknown; response: Response }>,
 ): Promise<T> {
-  const { data, error, response } = await call
+  let settled: { data?: T; error?: unknown; response: Response }
+  try {
+    settled = await call
+  } catch {
+    // fetch lança TypeError em falha de rede (connection refused com a VM
+    // reiniciando, offline, DNS) — nunca chega a existir um Response.
+    throw new ApiError(0, null, {
+      code: "network_error",
+      message: SERVER_UNAVAILABLE_MESSAGE,
+    })
+  }
+  const { data, error, response } = settled
   if (!response.ok) throw apiErrorFrom(response.status, error)
   return data as T
 }

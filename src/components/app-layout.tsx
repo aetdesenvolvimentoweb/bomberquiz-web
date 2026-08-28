@@ -4,6 +4,9 @@ import { InstallBanner } from "@/features/pwa/install-banner"
 
 // Header do app autenticado (fora do /painel): mostra o link do painel
 // administrativo apenas para usuários com role "admin".
+//
+// A nav principal lista só destinos de conteúdo. "Assinatura" vive no menu do
+// perfil (ver `nav-shell.tsx`), junto de "Meu perfil" — é conta, não conteúdo.
 export function AppLayout() {
   const { user } = useSession()
 
@@ -11,7 +14,6 @@ export function AppLayout() {
     { to: "/quiz/iniciar", label: "Quiz" },
     { to: "/historico", label: "Histórico" },
     { to: "/desempenho", label: "Desempenho" },
-    { to: "/assinatura", label: "Assinatura" },
     ...(user?.role === "admin" ? [{ to: "/painel/eixos", label: "Painel administrativo" }] : []),
     ...(user?.role === "partner" ? [{ to: "/parceiro/inicio", label: "Área do parceiro" }] : []),
   ]

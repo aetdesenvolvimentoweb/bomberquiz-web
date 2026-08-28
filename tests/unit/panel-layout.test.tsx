@@ -80,6 +80,27 @@ describe("PanelLayout", () => {
     expect(await screen.findByText("Conteúdo de Matérias")).toBeInTheDocument()
   })
 
+  // O botão do menu é só o círculo de iniciais desde 2026-08-28: repetir o
+  // primeiro nome ao lado dele não acrescentava nada (o nome completo abre no
+  // topo da lista suspensa) e comia espaço do header.
+  it("identifica a conta pelas iniciais, sem repetir o nome no botão", async () => {
+    renderPanelLayout()
+
+    const trigger = await screen.findByRole("button", { name: "Conta de Ana Souza" })
+    expect(trigger).toHaveTextContent("AS")
+    expect(trigger).not.toHaveTextContent("Ana")
+  })
+
+  it("leva à assinatura pelo menu do perfil, também no painel administrativo", async () => {
+    renderPanelLayout()
+    const user = userEvent.setup()
+
+    await screen.findByText("Conteúdo de Eixos")
+    await user.click(await screen.findByRole("button", { name: "Conta de Ana Souza" }))
+
+    expect(await screen.findByRole("menuitem", { name: "Assinatura" })).toBeInTheDocument()
+  })
+
   it("desloga pelo menu do usuário (desktop)", async () => {
     mockedApiClient.POST.mockResolvedValue({
       data: null,

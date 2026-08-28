@@ -59,11 +59,18 @@ export function NavShell({ navItems }: { navItems: NavItem[] }) {
               <div className="hidden md:block">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm" className="gap-2">
-                      <span className="flex h-7 w-7 items-center justify-center rounded-full bg-muted text-xs font-medium">
-                        {getInitials(user.name)}
-                      </span>
-                      {user.name.split(" ")[0]}
+                    {/* Só o círculo de iniciais: o nome já abre logo abaixo, no
+                        DropdownMenuLabel, e repeti-lo no botão gastava espaço do
+                        header sem informar nada de novo. O `aria-label` carrega
+                        o nome porque, sem o texto visível, as iniciais sozinhas
+                        não dizem de quem é a conta para um leitor de tela. */}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      aria-label={`Conta de ${user.name}`}
+                      className="h-9 w-9 rounded-full bg-muted text-xs font-medium"
+                    >
+                      {getInitials(user.name)}
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
@@ -71,6 +78,14 @@ export function NavShell({ navItems }: { navItems: NavItem[] }) {
                     <DropdownMenuSeparator />
                     <DropdownMenuItem asChild>
                       <Link to="/perfil">Meu perfil</Link>
+                    </DropdownMenuItem>
+                    {/* Assinatura é assunto de conta, não de conteúdo — fica ao
+                        lado de "Meu perfil" em vez de disputar a nav principal
+                        com Quiz/Histórico/Desempenho. Vale para os três layouts
+                        (app, painel e parceiro): quem administra ou publica
+                        também tem uma assinatura própria. */}
+                    <DropdownMenuItem asChild>
+                      <Link to="/assinatura">Assinatura</Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
                       <Link to="/inicio">Início</Link>
@@ -137,6 +152,13 @@ export function NavShell({ navItems }: { navItems: NavItem[] }) {
                 className="block rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted"
               >
                 Meu perfil
+              </Link>
+              <Link
+                to="/assinatura"
+                onClick={() => setMobileNavOpen(false)}
+                className="block rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted"
+              >
+                Assinatura
               </Link>
               <Link
                 to="/inicio"

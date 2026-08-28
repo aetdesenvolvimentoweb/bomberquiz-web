@@ -436,6 +436,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/plans": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Listar planos (inclui desativados) */
+        get: operations["listPlansAdmin"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/plans/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Reajustar preço, parcelamento ou disponibilidade de um plano */
+        patch: operations["updatePlan"];
+        trace?: never;
+    };
     "/me/questions": {
         parameters: {
             query?: never;
@@ -2353,6 +2387,123 @@ export interface operations {
             };
             /** @description Pergunta não encontrada */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    listPlansAdmin: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Catálogo completo de planos */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: {
+                            id: string;
+                            /** @enum {string} */
+                            slug: "monthly" | "quarterly" | "semiannual" | "annual";
+                            name: string;
+                            duration_days: number;
+                            pix_price: number;
+                            card_price: number;
+                            max_installments: number;
+                            is_active: boolean;
+                            updated_at: string;
+                        }[];
+                    };
+                };
+            };
+            /** @description Não autenticado */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Acesso restrito a administradores */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    updatePlan: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    pix_price?: number;
+                    card_price?: number;
+                    max_installments?: number;
+                    is_active?: boolean;
+                };
+            };
+        };
+        responses: {
+            /** @description Plano atualizado */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        id: string;
+                        /** @enum {string} */
+                        slug: "monthly" | "quarterly" | "semiannual" | "annual";
+                        name: string;
+                        duration_days: number;
+                        pix_price: number;
+                        card_price: number;
+                        max_installments: number;
+                        is_active: boolean;
+                        updated_at: string;
+                    };
+                };
+            };
+            /** @description Não autenticado */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Acesso restrito a administradores */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Plano não encontrado */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Dados inválidos (ex.: preço de cartão abaixo do PIX) */
+            422: {
                 headers: {
                     [name: string]: unknown;
                 };

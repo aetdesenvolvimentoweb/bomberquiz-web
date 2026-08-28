@@ -1,8 +1,56 @@
+import { z } from "zod"
 import { ApiError } from "@/lib/api/errors"
 
 export function formatCentsToBRL(cents: number): string {
   return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(cents / 100)
 }
+
+// ─── Admin de planos (SUB-RF-001 CA-2) ──────────────────────────────────────
+
+/**
+ * O banco guarda centavos; o admin digita reais. A conversão mora aqui, num
+ * lugar só, porque errá-la significa vender por 1/100 ou por 100× do preço —
+ * e a tela não teria como desconfiar. Aceita vírgula (padrão pt-BR) e ponto.
+ */
+export function parseBRLToCents(input: string): number | null {
+  const normalized = input.trim().replace(/\./g, "").replace(",", ".")
+  if (normalized === "" || !/^\d+(\.\d{1,2})?$/.test(normalized)) return null
+  return Math.round(Number(normalized) * 100)
+}
+
+/** Inverso de `parseBRLToCents`, para preencher o formulário. Sem "R$". */
+export function formatCentsToInput(cents: number): string {
+  return (cents / 100).toFixed(2).replace(".", ",")
+}
+
+/** Preço de cartão sugerido: +10% sobre o PIX (§ Regras gerais do módulo). */
+export const CARD_PRICE_MARKUP = 1.1
+
+export function suggestCardPriceCents(pixPriceCents: number): number {
+  return Math.round(pixPriceCents * CARD_PRICE_MARKUP)
+}
+
+const priceField = z
+  .string()
+  .min(1, "Informe o preço")
+  .refine((value) => parseBRLToCents(value) !== null, "Use o formato 34,90")
+  // Piso do Mercado Pago — ele recusa cobrança abaixo de R$1,00, e o backend
+  // repete a regra. Barrar aqui evita um 422 depois de preencher tudo.
+  .refine((value) => (parseBRLToCents(value) ?? 0) >= 100, "O preço mínimo é R$ 1,00")
+
+export const planFormSchema = z
+  .object({
+    pixPrice: priceField,
+    cardPrice: priceField,
+    maxInstallments: z.coerce.number().int().min(1, "No mínimo 1×").max(12, "No máximo 12×"),
+    isActive: z.boolean(),
+  })
+  .refine(
+    (values) => (parseBRLToCents(values.cardPrice) ?? 0) >= (parseBRLToCents(values.pixPrice) ?? 0),
+    { path: ["cardPrice"], message: "O preço no cartão não pode ser menor que o do PIX" },
+  )
+
+export type PlanFormValues = z.infer<typeof planFormSchema>
 
 /**
  * Quando o dinheiro reaparece para o cliente, por método de pagamento.

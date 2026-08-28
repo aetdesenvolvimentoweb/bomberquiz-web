@@ -10,7 +10,11 @@ export type MySubscriptionResponse = paths["/me/subscription"]["get"]["responses
 export type Payment = paths["/me/payments"]["get"]["responses"][200]["content"]["application/json"]["items"][number]
 export type RefundResponse = paths["/me/payments/{id}/refund"]["post"]["responses"][200]["content"]["application/json"]
 
-const PLANS_QUERY_KEY = ["subscription", "plans"] as const
+// Exportada porque o admin de planos precisa invalidá-la ao reajustar um preço
+// (features/subscription/plans-admin-api.ts) — duplicar a tupla lá deixaria as
+// duas livres para divergirem em silêncio, e o sintoma seria um reajuste que
+// "não pega" na tela do cliente.
+export const PLANS_QUERY_KEY = ["subscription", "plans"] as const
 export const MY_SUBSCRIPTION_QUERY_KEY = ["subscription", "me"] as const
 const MY_PAYMENTS_QUERY_KEY = ["subscription", "payments"] as const
 

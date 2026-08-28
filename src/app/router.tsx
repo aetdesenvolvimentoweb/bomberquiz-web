@@ -25,6 +25,8 @@ import { HistoryPage } from "@/pages/quiz/history-page"
 import { PerformancePage } from "@/pages/quiz/performance-page"
 import { PlansPage } from "@/pages/subscription/plans-page"
 import { PaymentPage } from "@/pages/subscription/payment-page"
+import { SubscriptionPage } from "@/pages/subscription/subscription-page"
+import { PaymentsHistoryPage } from "@/pages/subscription/payments-history-page"
 import { PanelLayout } from "@/components/panel-layout"
 import { PartnerLayout } from "@/components/partner-layout"
 import { AppLayout } from "@/components/app-layout"
@@ -73,6 +75,8 @@ export const router = createBrowserRouter([
                   { path: "/historico", element: <HistoryPage /> },
                   { path: "/desempenho", element: <PerformancePage /> },
                   { path: "/planos", element: <PlansPage /> },
+                  { path: "/assinatura", element: <SubscriptionPage /> },
+                  { path: "/assinatura/pagamentos", element: <PaymentsHistoryPage /> },
                   { path: "/assinatura/pagamento/:paymentId", element: <PaymentPage /> },
                 ],
               },

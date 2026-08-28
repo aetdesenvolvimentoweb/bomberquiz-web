@@ -164,6 +164,9 @@ export default defineConfig(({ mode }) => {
       setupFiles: ["./tests/setup.ts"],
       env: {
         VITE_API_BASE_URL: "http://localhost:3000",
+        // Vazio de propósito: testes não devem depender do conteúdo de .env local
+        // (ex.: plans-page.test.tsx cobre o fallback "sem chave configurada").
+        VITE_MP_PUBLIC_KEY: "",
       },
     },
   }

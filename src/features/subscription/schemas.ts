@@ -25,3 +25,18 @@ export function checkoutErrorMessage(error: ApiError): string {
       return error.message
   }
 }
+
+export function refundErrorMessage(error: ApiError): string {
+  switch (error.code) {
+    case "payment_not_found":
+      return "Pagamento não encontrado."
+    case "payment_not_refundable":
+      return "Este pagamento não pode ser reembolsado."
+    case "refund_window_expired":
+      return "O prazo de 7 dias para reembolso já passou."
+    case "refund_gateway_error":
+      return "Não foi possível falar com o Mercado Pago agora. Tente novamente em instantes."
+    default:
+      return error.message
+  }
+}

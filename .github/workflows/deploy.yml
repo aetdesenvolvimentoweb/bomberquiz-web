@@ -44,13 +44,23 @@ jobs:
       - run: bun install --frozen-lockfile
 
       - name: Build
-        run: bun run build
+        # A guarda existe porque `vars.X`/`secrets.X` não definidos resolvem para
+        # string VAZIA, sem erro: o build passa, o deploy passa, e o defeito só
+        # aparece na tela do usuário. Foi o que aconteceu em 2026-08-28 com a
+        # chave do Mercado Pago (cadastrada como *secret* enquanto o workflow lia
+        # `vars.`) — cartão ficou indisponível em produção por um dia inteiro.
+        # Falhar aqui é barulhento e barato; descobrir em produção, não.
+        run: |
+          : "${VITE_MP_PUBLIC_KEY:?vazia — cadastre o secret VITE_MP_PUBLIC_KEY no repositório}"
+          bun run build
         env:
           VITE_API_BASE_URL: https://api.bomberquiz.com.br
           # DSN não é segredo (vai embutido no bundle público de qualquer forma).
           VITE_SENTRY_DSN: ${{ vars.VITE_SENTRY_DSN }}
-          # Chave pública do Mercado Pago (Card Payment Brick) — idem, não é segredo.
-          VITE_MP_PUBLIC_KEY: ${{ vars.VITE_MP_PUBLIC_KEY }}
+          # Chave PÚBLICA do Mercado Pago (Card Payment Brick) — vai embutida no
+          # bundle, então não é segredo de fato. Fica em `secrets` apenas porque
+          # é onde ela já está cadastrada, e o repositório é público.
+          VITE_MP_PUBLIC_KEY: ${{ secrets.VITE_MP_PUBLIC_KEY }}
           # Habilita o upload de sourcemap (@sentry/vite-plugin em vite.config.ts) —
           # sem os três, o plugin não entra no build e o passo segue normal.
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}

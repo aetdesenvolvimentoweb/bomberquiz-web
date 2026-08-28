@@ -7,8 +7,8 @@ export type SessionUser = {
   name: string
   email: string
   phone: string
-  dob: string
-  sex: "masculino" | "feminino" | "prefere_nao_informar"
+  dob: string | null
+  sex: "masculino" | "feminino" | "prefere_nao_informar" | null
   avatarUrl: string | null
   emailVerifiedAt: string | null
   role: "client" | "partner" | "admin"

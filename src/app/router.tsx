@@ -23,6 +23,8 @@ import { AnswerQuizPage } from "@/pages/quiz/answer-quiz-page"
 import { ResultQuizPage } from "@/pages/quiz/result-quiz-page"
 import { HistoryPage } from "@/pages/quiz/history-page"
 import { PerformancePage } from "@/pages/quiz/performance-page"
+import { PlansPage } from "@/pages/subscription/plans-page"
+import { PaymentPage } from "@/pages/subscription/payment-page"
 import { PanelLayout } from "@/components/panel-layout"
 import { PartnerLayout } from "@/components/partner-layout"
 import { AppLayout } from "@/components/app-layout"
@@ -70,6 +72,8 @@ export const router = createBrowserRouter([
                   { path: "/quiz/:quizId/resultado", element: <ResultQuizPage /> },
                   { path: "/historico", element: <HistoryPage /> },
                   { path: "/desempenho", element: <PerformancePage /> },
+                  { path: "/planos", element: <PlansPage /> },
+                  { path: "/assinatura/pagamento/:paymentId", element: <PaymentPage /> },
                 ],
               },
               { path: "/perfil/email/confirmar", element: <EmailConfirmPage /> },

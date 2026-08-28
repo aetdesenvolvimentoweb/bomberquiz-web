@@ -11,4 +11,8 @@ export const env = {
   API_BASE_URL: apiBaseUrl,
   // Monitoramento de erro (ADR-0031, opcional) — ausente = SDK não inicializa.
   SENTRY_DSN: import.meta.env.VITE_SENTRY_DSN,
+  // Chave pública do Mercado Pago para o Card Payment Brick (Módulo 6, Fatia 5) —
+  // opcional como o Sentry: ausente = opção de cartão fica desabilitada, PIX segue
+  // funcionando normalmente.
+  MP_PUBLIC_KEY: import.meta.env.VITE_MP_PUBLIC_KEY,
 }

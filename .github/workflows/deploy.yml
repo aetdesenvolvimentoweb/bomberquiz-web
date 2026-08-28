@@ -49,6 +49,8 @@ jobs:
           VITE_API_BASE_URL: https://api.bomberquiz.com.br
           # DSN não é segredo (vai embutido no bundle público de qualquer forma).
           VITE_SENTRY_DSN: ${{ vars.VITE_SENTRY_DSN }}
+          # Chave pública do Mercado Pago (Card Payment Brick) — idem, não é segredo.
+          VITE_MP_PUBLIC_KEY: ${{ vars.VITE_MP_PUBLIC_KEY }}
           # Habilita o upload de sourcemap (@sentry/vite-plugin em vite.config.ts) —
           # sem os três, o plugin não entra no build e o passo segue normal.
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}

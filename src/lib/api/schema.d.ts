@@ -660,6 +660,108 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/plans": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Listar planos ativos (público) */
+        get: operations["listPlans"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/checkout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Iniciar checkout de assinatura */
+        post: operations["checkout"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/webhooks/mercado-pago": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Webhook do Mercado Pago — confirmação de pagamento */
+        post: operations["mpWebhook"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/subscription": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Status da própria assinatura */
+        get: operations["getMySubscription"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/payments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Histórico de pagamentos do próprio cliente */
+        get: operations["listMyPayments"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/payments/{id}/refund": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Solicitar reembolso (7 dias, CDC art. 49) */
+        post: operations["refundPayment"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/axes": {
         parameters: {
             query?: never;
@@ -800,9 +902,9 @@ export interface operations {
                             /** Format: email */
                             email: string;
                             phone: string;
-                            dob: string;
-                            /** @enum {string} */
-                            sex: "masculino" | "feminino" | "prefere_nao_informar";
+                            dob: string | null;
+                            /** @enum {string|null} */
+                            sex: "masculino" | "feminino" | "prefere_nao_informar" | null;
                             avatarUrl: string | null;
                             emailVerifiedAt: string | null;
                             /** @enum {string} */
@@ -945,9 +1047,9 @@ export interface operations {
                             /** Format: email */
                             email: string;
                             phone: string;
-                            dob: string;
-                            /** @enum {string} */
-                            sex: "masculino" | "feminino" | "prefere_nao_informar";
+                            dob: string | null;
+                            /** @enum {string|null} */
+                            sex: "masculino" | "feminino" | "prefere_nao_informar" | null;
                             avatarUrl: string | null;
                             emailVerifiedAt: string | null;
                             /** @enum {string} */
@@ -1057,9 +1159,9 @@ export interface operations {
                             /** Format: email */
                             email: string;
                             phone: string;
-                            dob: string;
-                            /** @enum {string} */
-                            sex: "masculino" | "feminino" | "prefere_nao_informar";
+                            dob: string | null;
+                            /** @enum {string|null} */
+                            sex: "masculino" | "feminino" | "prefere_nao_informar" | null;
                             avatarUrl: string | null;
                             emailVerifiedAt: string | null;
                             /** @enum {string} */
@@ -2797,6 +2899,13 @@ export interface operations {
                 };
                 content?: never;
             };
+            /** @description Sem assinatura, cortesia ou trial ativos (QUIZ-RF-009) */
+            402: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
             /** @description Não é possível montar o quiz (perguntas insuficientes ou pesos de eixo inválidos) */
             409: {
                 headers: {
@@ -2846,6 +2955,13 @@ export interface operations {
                         quiz_finished: boolean;
                     };
                 };
+            };
+            /** @description Sem assinatura, cortesia ou trial ativos (QUIZ-RF-009) */
+            402: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Quiz não encontrado */
             404: {
@@ -3209,6 +3325,340 @@ export interface operations {
             };
             /** @description Parâmetro months fora do intervalo (1-24) */
             422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    listPlans: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Planos ativos */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: {
+                            /** @enum {string} */
+                            slug: "monthly" | "quarterly" | "semiannual" | "annual";
+                            name: string;
+                            duration_days: number;
+                            pix_price: number;
+                            card_price: number;
+                            max_installments: number;
+                        }[];
+                    };
+                };
+            };
+        };
+    };
+    checkout: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    /** @enum {string} */
+                    plan_slug: "monthly" | "quarterly" | "semiannual" | "annual";
+                    /** @enum {string} */
+                    method: "pix" | "mp_balance" | "card";
+                    card_token?: string;
+                    payment_method_id?: string;
+                    device_id?: string;
+                    installments?: number;
+                };
+            };
+        };
+        responses: {
+            /** @description Cobrança criada (PIX ou cartão) */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        method: "pix";
+                        payment_id: string;
+                        qr_code_base64: string | null;
+                        qr_code_text: string | null;
+                        expires_at: string;
+                        gross_amount: number;
+                        discount_amount: number;
+                        net_amount: number;
+                        coupon_applied: boolean;
+                    } | {
+                        /** @enum {string} */
+                        method: "card";
+                        payment_id: string;
+                        order_status: string;
+                        payment_status: string | null;
+                        status_detail: string | null;
+                        installments: number;
+                        gross_amount: number;
+                        discount_amount: number;
+                        net_amount: number;
+                        coupon_applied: boolean;
+                    };
+                };
+            };
+            /** @description Não autenticado */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Plano indisponível, método não suportado, parcelas inválidas ou token de cartão ausente */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Checkouts pendentes demais */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Falha de comunicação com o Mercado Pago */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    mpWebhook: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    type?: string;
+                    action?: string;
+                    data?: {
+                        id?: string;
+                    };
+                } & {
+                    [key: string]: unknown;
+                };
+            };
+        };
+        responses: {
+            /** @description Recebido — processado ou ignorado */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Assinatura inválida */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    getMySubscription: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Status de acesso e assinatura atual */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        access_status: "active" | "inactive";
+                        active_until: string | null;
+                        /** @enum {string|null} */
+                        source: "trial" | "paid" | "courtesy" | null;
+                        current_subscription: {
+                            id: string;
+                            plan_name: string;
+                            start_at: string;
+                            end_at: string;
+                            remaining_days: number;
+                        } | null;
+                        pending_payments: {
+                            id: string;
+                            plan_name: string;
+                            /** @enum {string} */
+                            method: "pix" | "mp_balance" | "card";
+                            amount: number;
+                            expires_at: string;
+                        }[];
+                        refund_eligible_payments: {
+                            id: string;
+                            plan_name: string;
+                            paid_at: string;
+                            refund_deadline: string;
+                        }[];
+                        /** @enum {string} */
+                        cta?: "subscribe";
+                    };
+                };
+            };
+            /** @description Não autenticado */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    listMyPayments: {
+        parameters: {
+            query?: {
+                page?: number;
+                page_size?: number;
+                status?: string;
+                created_from?: string | null;
+                created_to?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Lista paginada de pagamentos */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: {
+                            id: string;
+                            plan_name: string;
+                            /** @enum {string} */
+                            method: "pix" | "mp_balance" | "card";
+                            installments: number;
+                            gross_amount: number;
+                            discount_amount: number;
+                            net_amount: number;
+                            /** @enum {string} */
+                            status: "pending" | "paid" | "failed" | "refunded";
+                            created_at: string;
+                            paid_at: string | null;
+                            refunded_at: string | null;
+                            failure_reason: string | null;
+                            mp_payment_id: string | null;
+                            mp_receipt_url: string | null;
+                            refund_deadline: string | null;
+                            refundable: boolean;
+                        }[];
+                        page: number;
+                        page_size: number;
+                        total: number;
+                    };
+                };
+            };
+            /** @description Não autenticado */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    refundPayment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    reason?: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Reembolso solicitado */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        id: string;
+                        /** @enum {string} */
+                        status: "pending" | "paid" | "failed" | "refunded";
+                        refunded_at: string;
+                        net_amount: number;
+                        subscription_revoked: boolean;
+                    };
+                };
+            };
+            /** @description Não autenticado */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Pagamento não encontrado ou de outro cliente */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Pagamento não reembolsável ou janela de 7 dias expirada */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validação Zod falhou */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Falha ao processar o reembolso no Mercado Pago */
+            502: {
                 headers: {
                     [name: string]: unknown;
                 };

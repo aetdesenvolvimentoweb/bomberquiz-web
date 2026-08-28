@@ -20,8 +20,8 @@ export function PersonalInfoSection({ user }: { user: SessionUser }) {
     defaultValues: {
       name: user.name,
       phone: user.phone,
-      dob: user.dob,
-      sex: user.sex,
+      dob: user.dob ?? "",
+      sex: user.sex ?? "prefere_nao_informar",
     },
   })
 

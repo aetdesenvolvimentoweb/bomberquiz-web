@@ -16,7 +16,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { formatCentsToBRL, refundErrorMessage } from "@/features/subscription/schemas"
+import {
+  formatCentsToBRL,
+  refundErrorMessage,
+  REFUND_TIMING_SHORT,
+  REFUND_TIMING_TEXT,
+} from "@/features/subscription/schemas"
 import { useMyPayments, useRequestRefund } from "@/features/subscription/subscription-api"
 import { ApiError } from "@/lib/api/errors"
 
@@ -61,11 +66,22 @@ export function PaymentsHistoryPage() {
 
   const totalPages = data ? Math.max(1, Math.ceil(data.total / PAGE_SIZE)) : 1
 
+  // O prazo de devolução depende do método, então tanto a confirmação quanto o
+  // aviso de sucesso precisam saber QUAL pagamento está em jogo.
+  const refundPayment = data?.items.find((payment) => payment.id === refundTarget)
+
   async function handleRefund() {
     if (!refundTarget) return
+    const method = refundPayment?.method
     try {
       await refundMutation.mutateAsync({ paymentId: refundTarget })
-      toast.success("Reembolso solicitado.")
+      // "Confirmado", não "solicitado": o estorno já foi feito no Mercado Pago
+      // no momento em que a chamada voltou. O que falta é só o dinheiro
+      // reaparecer no banco do cliente — daí o prazo junto, na descrição.
+      toast.success("Reembolso confirmado.", {
+        description: method ? REFUND_TIMING_TEXT[method] : undefined,
+        duration: 10000,
+      })
       setRefundTarget(null)
     } catch (err) {
       toast.error(err instanceof ApiError ? refundErrorMessage(err) : "Não foi possível solicitar o reembolso.")
@@ -154,6 +170,13 @@ export function PaymentsHistoryPage() {
                     <Badge variant={STATUS_BADGE_VARIANT[payment.status] ?? "secondary"}>
                       {STATUS_LABELS[payment.status] ?? payment.status}
                     </Badge>
+                    {/* "Reembolsado" sozinho soa como "dinheiro já na conta", e
+                        manda o cliente procurar no extrato antes da hora. O
+                        estorno está feito; o crédito é que ainda depende do
+                        caminho de volta. */}
+                    {payment.status === "refunded" && REFUND_TIMING_SHORT[payment.method] && (
+                      <p className="mt-1 text-xs text-muted-foreground">{REFUND_TIMING_SHORT[payment.method]}</p>
+                    )}
                   </TableCell>
                   <TableCell className="text-muted-foreground">
                     {new Date(payment.created_at).toLocaleDateString("pt-BR")}
@@ -210,9 +233,21 @@ export function PaymentsHistoryPage() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Solicitar reembolso?</AlertDialogTitle>
+            {/* O prazo de devolução aparece ANTES de confirmar. Deixá-lo só no
+                e-mail de confirmação fazia o cliente estornar, ir procurar o
+                dinheiro no banco e não achar — sem nunca ter sido avisado de
+                que o crédito não é instantâneo. */}
             <AlertDialogDescription>
-              Seu pagamento será estornado e, se este era o seu único acesso ativo, a assinatura será cancelada.
-              Esta ação não pode ser desfeita.
+              {refundPayment && (
+                <span className="block">
+                  Você receberá de volta {formatCentsToBRL(refundPayment.net_amount)}
+                  {refundPayment.plan_name ? ` do plano ${refundPayment.plan_name}` : ""}.{" "}
+                  {REFUND_TIMING_TEXT[refundPayment.method] ?? ""}
+                </span>
+              )}
+              <span className="mt-2 block">
+                Se este era o seu único acesso ativo, a assinatura será cancelada. Esta ação não pode ser desfeita.
+              </span>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

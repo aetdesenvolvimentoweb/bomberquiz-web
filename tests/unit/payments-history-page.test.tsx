@@ -123,7 +123,55 @@ describe("PaymentsHistoryPage", () => {
         expect.objectContaining({ params: { path: { id: "pay-1" } } }),
       ),
     )
-    expect(toast.success).toHaveBeenCalledWith("Reembolso solicitado.")
+    expect(toast.success).toHaveBeenCalledWith(
+      "Reembolso confirmado.",
+      expect.objectContaining({ description: expect.stringContaining("poucos minutos") }),
+    )
+  })
+
+  // O cliente estornou um cartão, foi procurar o dinheiro no banco e não achou
+  // — porque o prazo só era mencionado no e-mail, depois do fato (2026-08-28).
+  // O aviso tem que estar na tela em que ele decide.
+  it("mostra o prazo de devolução do cartão antes de confirmar o reembolso", async () => {
+    mockedApiClient.GET.mockResolvedValue(
+      jsonResponse({ items: [buildPayment({ method: "card" })], page: 1, page_size: 20, total: 1 }),
+    )
+
+    renderPage()
+    const user = userEvent.setup()
+
+    await user.click(await screen.findByRole("button", { name: "Solicitar reembolso" }))
+
+    expect(await screen.findByText(/pode chegar a 10 dias úteis/)).toBeInTheDocument()
+    expect(screen.getByText(/Você receberá de volta R\$\s?29,90 do plano Mensal/)).toBeInTheDocument()
+  })
+
+  it("mostra o prazo de devolução do PIX, que é diferente do cartão", async () => {
+    mockedApiClient.GET.mockResolvedValue(jsonResponse({ items: [buildPayment()], page: 1, page_size: 20, total: 1 }))
+
+    renderPage()
+    const user = userEvent.setup()
+
+    await user.click(await screen.findByRole("button", { name: "Solicitar reembolso" }))
+
+    expect(await screen.findByText(/normalmente em poucos minutos/)).toBeInTheDocument()
+    expect(screen.queryByText(/10 dias úteis/)).not.toBeInTheDocument()
+  })
+
+  it("explica na linha do histórico que o crédito de um reembolso ainda está a caminho", async () => {
+    mockedApiClient.GET.mockResolvedValue(
+      jsonResponse({
+        items: [buildPayment({ method: "card", status: "refunded", refundable: false })],
+        page: 1,
+        page_size: 20,
+        total: 1,
+      }),
+    )
+
+    renderPage()
+
+    expect(await screen.findByText("Reembolsado", { selector: "div" })).toBeInTheDocument()
+    expect(screen.getByText("Crédito na fatura em até 10 dias úteis.")).toBeInTheDocument()
   })
 
   it("mostra mensagem específica quando a janela de reembolso expirou", async () => {

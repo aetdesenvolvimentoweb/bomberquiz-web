@@ -1,5 +1,5 @@
-import { Link } from "react-router-dom"
-import { cn } from "@/lib/utils"
+import { cn } from "@/lib/utils";
+import { Link } from "react-router-dom";
 
 export function Brand({ className }: { className?: string }) {
   return (
@@ -7,8 +7,8 @@ export function Brand({ className }: { className?: string }) {
       to="/"
       className={cn("font-bold transition-opacity hover:opacity-80", className)}
     >
-      <span className="text-foreground">Bomber</span>
-      <span className="text-ember">Quiz</span>
+      <span className="text-foreground text-2xl">Bomber</span>
+      <span className="text-ember text-2xl">Quiz</span>
     </Link>
-  )
+  );
 }

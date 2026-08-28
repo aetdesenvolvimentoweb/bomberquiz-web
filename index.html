@@ -11,8 +11,40 @@
     <link rel="icon" type="image/svg+xml" href="/icons/icon-192.svg" />
     <link rel="icon" href="/favicon.ico" sizes="any" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-    <title>BomberQuiz</title>
-    <meta name="description" content="Quiz de preparação para o TAP do Corpo de Bombeiros Militar do Estado de Goiás" />
+    <title>BomberQuiz — Quiz para o TAP do CBMGO</title>
+    <meta name="description" content="Quiz das matérias cobradas no Teste de Avaliação Profissional do Corpo de Bombeiros Militar de Goiás. 7 dias grátis." />
+
+    <!--
+      Prévia do link (OpenGraph / Twitter Card). É o cartão com imagem, título e
+      descrição que WhatsApp, Instagram e afins montam quando alguém cola o
+      endereço numa conversa. Sem estas tags o app mostra só a URL crua, e a
+      aquisição aqui é boca-a-boca por link compartilhado — é este cartão, não o
+      Google, que decide se a pessoa clica.
+
+      As tags são ESTÁTICAS de propósito. Os robôs desses aplicativos não
+      executam JavaScript: só leem o HTML como veio do servidor. Como o SPA é um
+      arquivo só, toda rota compartilhada mostra o mesmo cartão — correto aqui,
+      porque o link que circula é o da raiz. Se um dia rotas diferentes
+      precisarem de prévias diferentes, aí sim é caso de pré-renderização
+      (anotado no backlog).
+
+      `og:image` precisa de URL ABSOLUTA — caminho relativo é ignorado por boa
+      parte dos robôs.
+    -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="BomberQuiz" />
+    <meta property="og:title" content="BomberQuiz — Quiz para o TAP do CBMGO" />
+    <meta property="og:description" content="Treine as matérias do Teste de Avaliação Profissional e veja seu desempenho por matéria. 7 dias grátis." />
+    <meta property="og:url" content="https://app.bomberquiz.com.br/" />
+    <meta property="og:image" content="https://app.bomberquiz.com.br/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="BomberQuiz — Preparação que vira resultado" />
+    <meta property="og:locale" content="pt_BR" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="BomberQuiz — Quiz para o TAP do CBMGO" />
+    <meta name="twitter:description" content="Treine as matérias do Teste de Avaliação Profissional e veja seu desempenho por matéria. 7 dias grátis." />
+    <meta name="twitter:image" content="https://app.bomberquiz.com.br/og-image.png" />
   </head>
   <body>
     <div id="root"></div>

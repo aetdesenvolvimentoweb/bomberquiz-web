@@ -1,0 +1,53 @@
+<!doctype html>
+<!--
+  Fonte da imagem de prévia de link (`public/og-image.png`, 1200×630) — a que
+  WhatsApp, Instagram e afins mostram quando alguém compartilha o endereço do app.
+
+  É PROVISÓRIA: feita em HTML porque não havia ferramenta de imagem no ambiente,
+  e mantida aqui para ser reproduzível. Sem a fonte, "provisória" viraria
+  permanente — ninguém troca o que não sabe como foi feito.
+
+  Para regerar depois de editar este arquivo (precisa do Playwright da skill
+  `run-bomberquiz-web`, que já tem o Chromium baixado):
+
+    node -e '
+      const { createRequire } = require("node:module")
+      const req = createRequire(process.cwd() + "/.claude/skills/run-bomberquiz-web/")
+      const { chromium } = req("playwright")
+      chromium.launch().then(async (b) => {
+        const p = await b.newPage({ viewport: { width: 1200, height: 630 } })
+        await p.goto("file://" + process.cwd() + "/tools/og-image.html")
+        await p.screenshot({ path: "public/og-image.png" })
+        await b.close()
+      })
+    '
+
+  Cores tiradas dos tokens reais do app (`src/index.css`): fundo `#0f172a`
+  (`--background` escuro) e destaque `#E44444`, que é `--ember` no tema escuro —
+  o mesmo vermelho do "Quiz" na marca. Ao substituir por uma arte definitiva,
+  mantenha 1200×630 e o texto longe das bordas: alguns aplicativos recortam.
+-->
+<html><head><meta charset="utf-8"><style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { width:1200px; height:630px; background:#0f172a; color:#f8fafc;
+         font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+         display:flex; flex-direction:column; justify-content:center; padding:0 88px;
+         position:relative; overflow:hidden; }
+  .glow { position:absolute; right:-160px; top:-160px; width:620px; height:620px; border-radius:50%;
+          background:radial-gradient(circle, rgba(228,68,68,.22) 0%, rgba(228,68,68,0) 70%); }
+  .mark { display:flex; align-items:center; gap:20px; margin-bottom:44px; }
+  .badge { width:76px; height:76px; border-radius:18px; background:#E44444; color:#ffffff;
+           font-size:34px; font-weight:800; display:flex; align-items:center; justify-content:center; }
+  .word { font-size:40px; font-weight:800; letter-spacing:-.5px; }
+  .word span { color:#E44444; }
+  h1 { font-size:66px; line-height:1.1; font-weight:800; letter-spacing:-1.5px; max-width:900px; }
+  p { margin-top:28px; font-size:31px; color:#94a3b8; max-width:860px; line-height:1.35; }
+  .cta { margin-top:44px; font-size:26px; font-weight:600; color:#E44444; }
+</style></head>
+<body>
+  <div class="glow"></div>
+  <div class="mark"><div class="badge">BQ</div><div class="word">Bomber<span>Quiz</span></div></div>
+  <h1>Preparação que vira resultado</h1>
+  <p>Quiz das matérias do Teste de Avaliação Profissional do CBMGO, com desempenho por matéria.</p>
+  <div class="cta">7 dias grátis para experimentar</div>
+</body></html>

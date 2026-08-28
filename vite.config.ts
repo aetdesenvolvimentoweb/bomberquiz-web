@@ -105,7 +105,12 @@ export default defineConfig(({ mode }) => {
           theme_color: "#0f172a",
           background_color: "#0f172a",
           display: "standalone",
-          start_url: "/",
+          // `/inicio`, não `/`, desde que a raiz virou vitrine (2026-08-28).
+          // Quem instalou o app e está deslogado abriria numa página de venda
+          // em vez do login — e ele já é cliente, não precisa ser convencido.
+          // Fica a separação limpa: app instalado = app; raiz no navegador =
+          // vitrine. Quem tem sessão continua sendo levado direto para `/inicio`.
+          start_url: "/inicio",
           icons: [
             { src: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
             { src: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
@@ -114,6 +119,11 @@ export default defineConfig(({ mode }) => {
         },
         workbox: {
           globPatterns: ["**/*.{js,css,html,svg,png,ico}"],
+          // `og-image.png` só é lido pelos robôs de prévia de link (WhatsApp e
+          // afins), do lado de fora — o app nunca a requisita. Sem esta exclusão
+          // o `**/*.png` acima a colocaria no precache do service worker, e todo
+          // usuário baixaria ~150KB que jamais vai usar.
+          globIgnores: ["og-image.png"],
           navigateFallback: "/index.html",
           navigateFallbackDenylist: [/^\/(admin|auth|webhooks|api)\//],
           // Admin, auth e webhooks ficam de fora de propósito: precisam sempre de dados

@@ -470,6 +470,40 @@ export interface paths {
         patch: operations["updatePlan"];
         trace?: never;
     };
+    "/admin/financial/overview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Agregados financeiros do período (receita, estornos, taxas, líquido) */
+        get: operations["getFinancialOverview"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/payments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Listar transações (todas as compras, com cliente, taxa e líquido) */
+        get: operations["listAdminPayments"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/me/questions": {
         parameters: {
             query?: never;
@@ -2504,6 +2538,140 @@ export interface operations {
             };
             /** @description Dados inválidos (ex.: preço de cartão abaixo do PIX) */
             422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    getFinancialOverview: {
+        parameters: {
+            query?: {
+                from?: string;
+                to?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Consolidado do período */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        period: {
+                            from: string;
+                            to: string;
+                        };
+                        revenue: {
+                            total_cents: number;
+                            count: number;
+                            by_plan: {
+                                plan_slug: string;
+                                plan_name: string;
+                                count: number;
+                                total_cents: number;
+                            }[];
+                            by_method: {
+                                /** @enum {string} */
+                                method: "pix" | "mp_balance" | "card";
+                                count: number;
+                                total_cents: number;
+                            }[];
+                            refunded_cents: number;
+                            refunded_count: number;
+                            fee_cents: number;
+                            received_cents: number;
+                            fee_unknown_count: number;
+                        };
+                        users: {
+                            active_paid: number;
+                            in_trial: number;
+                        };
+                    };
+                };
+            };
+            /** @description Não autenticado */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Acesso restrito a administradores */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    listAdminPayments: {
+        parameters: {
+            query?: {
+                from?: string;
+                to?: string;
+                status?: "pending" | "paid" | "failed" | "refunded";
+                method?: "pix" | "mp_balance" | "card";
+                plan_id?: string;
+                search?: string;
+                page?: number;
+                page_size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Página de transações */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: {
+                            id: string;
+                            user_id: string;
+                            user_name: string;
+                            user_email: string;
+                            plan_slug: string;
+                            plan_name: string;
+                            /** @enum {string} */
+                            method: "pix" | "mp_balance" | "card";
+                            /** @enum {string} */
+                            status: "pending" | "paid" | "failed" | "refunded";
+                            installments: number;
+                            net_amount: number;
+                            fee_amount: number | null;
+                            received_amount: number | null;
+                            mp_legacy_payment_id: string | null;
+                            created_at: string;
+                            paid_at: string | null;
+                            refunded_at: string | null;
+                        }[];
+                        page: number;
+                        page_size: number;
+                        total: number;
+                    };
+                };
+            };
+            /** @description Não autenticado */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Acesso restrito a administradores */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };

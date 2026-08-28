@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Link, useLocation, useParams } from "react-router-dom"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
@@ -34,11 +34,25 @@ export function PaymentPage() {
   const location = useLocation()
   const initialCheckout = (location.state as { checkout?: CheckoutResponse } | null)?.checkout
 
-  const { data: subscription, isPending } = useMySubscription({ poll: true })
+  const { data: subscription, isPending } = useMySubscription({ pollForPaymentId: paymentId })
 
   const pendingEntry = subscription?.pending_payments.find((payment) => payment.id === paymentId)
   const initialExpiresAt = initialCheckout?.method === "pix" ? initialCheckout.expires_at : null
   const remainingSeconds = useCountdown(pendingEntry?.expires_at ?? initialExpiresAt)
+
+  // O desfecho é deste pagamento, não do acesso do usuário. Numa renovação o
+  // acesso já está ativo antes de pagar, então `access_status` não distingue
+  // "aprovado" de "recusado" — usá-lo mostrava "Pagamento confirmado" mesmo
+  // para um cartão negado. `refund_eligible_payments` é a lista de pagamentos
+  // com status `paid` na janela de 7 dias: um pagamento recém-aprovado sempre
+  // está lá, e um recusado nunca.
+  const confirmed = subscription?.refund_eligible_payments.some((payment) => payment.id === paymentId) ?? false
+
+  // Só afirmamos "não confirmado" se chegamos a ver o pagamento pendente. Sem
+  // isso, abrir o link de um pagamento antigo (fora da janela de reembolso,
+  // portanto ausente das duas listas) anunciaria uma falha que não houve.
+  const sawPending = useRef(false)
+  if (pendingEntry) sawPending.current = true
 
   if (isPending || !subscription) {
     return (
@@ -48,8 +62,8 @@ export function PaymentPage() {
     )
   }
 
-  // Confirmado: o pagamento saiu de pending_payments e o acesso está ativo.
-  if (!pendingEntry && subscription.access_status === "active") {
+  // Confirmado: saiu de pending_payments e consta como pago.
+  if (!pendingEntry && confirmed) {
     return (
       <div className="mx-auto max-w-md px-4 py-16 text-center">
         <h1 className="text-xl font-semibold">Pagamento confirmado</h1>
@@ -63,8 +77,8 @@ export function PaymentPage() {
     )
   }
 
-  // Saiu de pending_payments mas o acesso segue inativo: falhou ou expirou.
-  if (!pendingEntry && subscription.access_status === "inactive") {
+  // Saiu de pending_payments sem virar pago: recusado ou expirado.
+  if (!pendingEntry && sawPending.current) {
     return (
       <div className="mx-auto max-w-md px-4 py-16 text-center">
         <h1 className="text-xl font-semibold">Pagamento não confirmado</h1>
@@ -73,6 +87,22 @@ export function PaymentPage() {
         </p>
         <Button asChild className="mt-6">
           <Link to="/planos">Ver planos</Link>
+        </Button>
+      </div>
+    )
+  }
+
+  // Nunca esteve pendente nem consta como pago: link antigo ou já resolvido por
+  // outro caminho. O histórico tem o status real; não inventamos um aqui.
+  if (!pendingEntry) {
+    return (
+      <div className="mx-auto max-w-md px-4 py-16 text-center">
+        <h1 className="text-xl font-semibold">Pagamento não encontrado em aberto</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Este pagamento não está mais aguardando confirmação. Consulte o histórico para ver a situação dele.
+        </p>
+        <Button asChild className="mt-6">
+          <Link to="/assinatura/pagamentos">Ver histórico</Link>
         </Button>
       </div>
     )
@@ -129,6 +159,12 @@ export function PaymentPage() {
       <div className="mt-8 flex justify-center">
         <Spinner className="h-6 w-6" />
       </div>
+
+      {/* Saída manual: esta tela espera indefinidamente, e sem isto quem ficasse
+          preso aqui não teria para onde ir (incidente 2026-08-28). */}
+      <Button asChild variant="link" className="mt-4 text-muted-foreground">
+        <Link to="/assinatura">Ver minha assinatura</Link>
+      </Button>
     </div>
   )
 }

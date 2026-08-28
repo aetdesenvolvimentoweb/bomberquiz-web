@@ -32,21 +32,29 @@ export function useCheckout() {
 }
 
 /**
- * `poll: true` refaz a cada 3s enquanto o pagamento seguir em `pending_payments`
- * — mesmo formato condicional de `useAiGenerationJob` (Módulo 7, removido do
- * repo, git 954c6d0), único precedente de poll-até-estado-terminal do projeto.
- * Sem endpoint de status por pagamento, a confirmação é sempre via este GET.
+ * `pollForPaymentId` refaz a cada 3s enquanto **aquele** pagamento seguir em
+ * `pending_payments` — mesmo formato condicional de `useAiGenerationJob`
+ * (Módulo 7, removido do repo, git 954c6d0), único precedente de
+ * poll-até-estado-terminal do projeto. Sem endpoint de status por pagamento,
+ * a confirmação é sempre via este GET.
+ *
+ * A condição é o pagamento, e NÃO `access_status`. A versão anterior parava o
+ * poll quando o acesso estava ativo — o que quebrava exatamente o caso mais
+ * comum, a **renovação**: quem já tem assinatura vigente chega ao checkout com
+ * `access_status: "active"`, então o poll nunca começava e a tela de pagamento
+ * congelava em "Aguardando confirmação" para sempre, mesmo com o pagamento já
+ * aprovado no banco (incidente 2026-08-28, cartão em produção).
  */
-export function useMySubscription(options?: { poll?: boolean }) {
+export function useMySubscription(options?: { pollForPaymentId?: string }) {
   return useQuery({
     queryKey: MY_SUBSCRIPTION_QUERY_KEY,
     queryFn: () => unwrap(apiClient.GET("/me/subscription")),
     refetchInterval: (query) => {
-      if (!options?.poll) return false
+      const paymentId = options?.pollForPaymentId
+      if (!paymentId) return false
       const data = query.state.data
       if (!data) return 3000
-      const stillPending = data.access_status === "inactive" && data.pending_payments.length > 0
-      return stillPending ? 3000 : false
+      return data.pending_payments.some((payment) => payment.id === paymentId) ? 3000 : false
     },
   })
 }

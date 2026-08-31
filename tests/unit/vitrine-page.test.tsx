@@ -69,15 +69,30 @@ function renderRaiz({ logado, planos = PLANOS }: { logado: boolean; planos?: unk
   )
 }
 
+/**
+ * Os CTAs pelo DESTINO, nunca pelo texto. O que estes testes garantem é que a
+ * vitrine oferece caminho para o cadastro — a redação do botão é copy, existe
+ * para ser reescrita, e prendê-la fazia um ajuste de texto quebrar quatro
+ * asserções de uma vez.
+ *
+ * São dois na vitrine: o do herói e o do pé da seção de planos. `queryAll…`, e
+ * não `getAll…`, porque este helper também serve para provar AUSÊNCIA — na tela
+ * de quem já tem sessão não há link nenhum, e o `getAll…` lançaria em vez de
+ * devolver lista vazia.
+ */
+function ctasDeCadastro(): HTMLElement[] {
+  return screen.queryAllByRole("link").filter((l) => l.getAttribute("href") === "/cadastro")
+}
+
 beforeEach(() => {
   vi.clearAllMocks()
 })
 
 describe("Vitrine em / (visitante sem sessão)", () => {
   /**
-   * Verifica que existe um título e o CTA, não QUAL é o texto: a copy da
-   * vitrine é para ser mexida, e um teste que prende a frase exata quebra a
-   * cada ajuste sem apontar defeito nenhum.
+   * Verifica que existe um título e um caminho para o cadastro, não QUAL é o
+   * texto: a copy da vitrine é para ser mexida, e um teste que prende a frase
+   * exata quebra a cada ajuste sem apontar defeito nenhum.
    */
   it("mostra a vitrine em vez de mandar para o login", async () => {
     // Act
@@ -85,7 +100,7 @@ describe("Vitrine em / (visitante sem sessão)", () => {
 
     // Assert
     expect(await screen.findByRole("heading", { level: 1 })).toBeInTheDocument()
-    expect(screen.getByRole("link", { name: "Experimente grátis por 7 dias" })).toBeInTheDocument()
+    expect(ctasDeCadastro().length).toBeGreaterThan(0)
   })
 
   /**
@@ -112,13 +127,14 @@ describe("Vitrine em / (visitante sem sessão)", () => {
     expect(screen.queryByText("R$ 29,90 por mês")).not.toBeInTheDocument()
   })
 
-  it("o CTA principal leva ao cadastro", async () => {
+  it("oferece o cadastro no topo e no pé da seção de planos", async () => {
     // Act
     renderRaiz({ logado: false })
 
-    // Assert
-    const cta = await screen.findByRole("link", { name: "Experimente grátis por 7 dias" })
-    expect(cta).toHaveAttribute("href", "/cadastro")
+    // Assert — dois pontos de entrada: quem se convence pelo título e quem só
+    // se convence depois de ver o preço não deveriam ter de rolar de volta.
+    await screen.findByRole("heading", { level: 1 })
+    expect(ctasDeCadastro()).toHaveLength(2)
   })
 
   it("mantém o convite para entrar, para quem já é cliente", async () => {
@@ -139,8 +155,8 @@ describe("Vitrine em / (visitante sem sessão)", () => {
     renderRaiz({ logado: false, planos: { items: [] } })
 
     // Assert
-    expect(await screen.findByText(/O teste grátis de 7 dias continua disponível/)).toBeInTheDocument()
-    expect(screen.getByRole("link", { name: "Experimente grátis por 7 dias" })).toBeInTheDocument()
+    expect(await screen.findByText(/teste grátis/i)).toBeInTheDocument()
+    expect(ctasDeCadastro().length).toBeGreaterThan(0)
   })
 
   /**
@@ -201,14 +217,25 @@ describe("Vitrine em / (visitante sem sessão)", () => {
     expect(screen.queryByText(/OFF/)).not.toBeInTheDocument();
   });
 
-  it("fecha os três passos com a frase de efeito", async () => {
+  /**
+   * Verifica a DECISÃO, não a frase. O fecho dos passos é um `<p>` e não um
+   * heading de propósito: em HTML um título anuncia o que vem DEPOIS dele, e
+   * quem navega por títulos num leitor de tela aterrissaria nele e cairia
+   * direto nos planos (ver o comentário em `vitrine-page.tsx`).
+   *
+   * A âncora são os `<h3>` dos cards — estrutura, não texto de venda. A versão
+   * anterior deste teste exigia a frase literal e quebrou o CI no primeiro
+   * ajuste de copy, sem apontar defeito nenhum.
+   */
+  it("fecha os três passos com uma frase, e não com um título falso", async () => {
     // Act
     renderRaiz({ logado: false });
 
     // Assert
-    expect(
-      await screen.findByText("Preparação que vira resultado"),
-    ).toBeInTheDocument();
+    const passos = await screen.findAllByRole("heading", { level: 3 });
+    const fecho = passos[0]!.closest("section")!.lastElementChild!;
+    expect(fecho.tagName).toBe("P");
+    expect(fecho.textContent?.trim()).not.toBe("");
   });
 
   it("leva a termos e privacidade no rodapé", async () => {
@@ -231,7 +258,7 @@ describe("Vitrine em / (quem já tem sessão)", () => {
     await waitFor(() => {
       // Pelo CTA, não pelo título: é o elemento que só existe na página de
       // venda e cuja presença aqui seria o defeito de verdade.
-      expect(screen.queryByRole("link", { name: "Experimente grátis por 7 dias" })).not.toBeInTheDocument()
+      expect(ctasDeCadastro()).toHaveLength(0)
     })
   })
 })

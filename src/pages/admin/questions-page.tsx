@@ -37,6 +37,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { useAxes } from "@/features/content/axes-api"
 import { useSubjects } from "@/features/content/subjects-api"
+import { DifficultyBadge } from "@/features/content/difficulty-badge"
 import {
   fetchQuestion,
   useArchiveQuestion,
@@ -231,6 +232,7 @@ export function QuestionsPage() {
                 <TableHead>Matéria</TableHead>
                 <TableHead>Eixo</TableHead>
                 <TableHead>Status</TableHead>
+                <TableHead>Nível</TableHead>
                 <TableHead>Criação</TableHead>
                 <TableHead>Imagem</TableHead>
                 <TableHead className="text-right">Ações</TableHead>
@@ -239,7 +241,7 @@ export function QuestionsPage() {
             <TableBody>
               {data.items.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center text-sm text-muted-foreground">
+                  <TableCell colSpan={8} className="text-center text-sm text-muted-foreground">
                     Nenhuma pergunta encontrada.
                   </TableCell>
                 </TableRow>
@@ -253,6 +255,17 @@ export function QuestionsPage() {
                     <Badge variant={question.status === "published" ? "success" : "secondary"}>
                       {STATUS_LABELS[question.status] ?? question.status}
                     </Badge>
+                  </TableCell>
+                  <TableCell>
+                    {question.status === "published" ? (
+                      <DifficultyBadge
+                        level={question.difficulty_level}
+                        totalAnswers={question.total_answers}
+                        accuracy={question.accuracy}
+                      />
+                    ) : (
+                      "—"
+                    )}
                   </TableCell>
                   <TableCell className="text-muted-foreground">
                     {creationLabel(question.author_name, question.source)}

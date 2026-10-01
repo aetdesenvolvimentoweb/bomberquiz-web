@@ -366,6 +366,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/questions/published": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Perguntas publicadas completas de uma matéria */
+        get: operations["listPublishedQuestionsBySubject"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/questions/{id}/approve": {
         parameters: {
             query?: never;
@@ -1898,6 +1915,8 @@ export interface operations {
                             archived_at: string | null;
                             total_answers: number;
                             accuracy: number;
+                            /** @enum {string} */
+                            difficulty_level: "very_easy" | "easy" | "medium" | "hard" | "very_hard";
                         }[];
                         page: number;
                         page_size: number;
@@ -1979,6 +1998,8 @@ export interface operations {
                         rejection_reason: string | null;
                         total_answers: number;
                         accuracy: number;
+                        /** @enum {string} */
+                        difficulty_level: "very_easy" | "easy" | "medium" | "hard" | "very_hard";
                     };
                 };
             };
@@ -2029,12 +2050,62 @@ export interface operations {
                             archived_at: string | null;
                             total_answers: number;
                             accuracy: number;
+                            /** @enum {string} */
+                            difficulty_level: "very_easy" | "easy" | "medium" | "hard" | "very_hard";
                             submitted_at: string;
                             partner_pending_count: number;
                         }[];
                         page: number;
                         page_size: number;
                         total: number;
+                    };
+                };
+            };
+            /** @description Não autenticado */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Acesso restrito a administradores */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    listPublishedQuestionsBySubject: {
+        parameters: {
+            query: {
+                subject_id: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Perguntas publicadas */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: {
+                            id: string;
+                            statement: string;
+                            alternatives: string[];
+                            correct_index: number;
+                            explanation: string;
+                            source_reference: string | null;
+                            published_at: string | null;
+                            /** @enum {string} */
+                            difficulty_level: "very_easy" | "easy" | "medium" | "hard" | "very_hard";
+                        }[];
                     };
                 };
             };
@@ -2104,6 +2175,8 @@ export interface operations {
                         rejection_reason: string | null;
                         total_answers: number;
                         accuracy: number;
+                        /** @enum {string} */
+                        difficulty_level: "very_easy" | "easy" | "medium" | "hard" | "very_hard";
                     };
                 };
             };
@@ -2173,6 +2246,8 @@ export interface operations {
                         rejection_reason: string | null;
                         total_answers: number;
                         accuracy: number;
+                        /** @enum {string} */
+                        difficulty_level: "very_easy" | "easy" | "medium" | "hard" | "very_hard";
                     };
                 };
             };
@@ -2243,6 +2318,8 @@ export interface operations {
                         rejection_reason: string | null;
                         total_answers: number;
                         accuracy: number;
+                        /** @enum {string} */
+                        difficulty_level: "very_easy" | "easy" | "medium" | "hard" | "very_hard";
                     };
                 };
             };
@@ -2346,6 +2423,8 @@ export interface operations {
                         rejection_reason: string | null;
                         total_answers: number;
                         accuracy: number;
+                        /** @enum {string} */
+                        difficulty_level: "very_easy" | "easy" | "medium" | "hard" | "very_hard";
                     };
                 };
             };
@@ -2416,6 +2495,8 @@ export interface operations {
                         rejection_reason: string | null;
                         total_answers: number;
                         accuracy: number;
+                        /** @enum {string} */
+                        difficulty_level: "very_easy" | "easy" | "medium" | "hard" | "very_hard";
                     };
                 };
             };
@@ -2719,7 +2800,7 @@ export interface operations {
                             total_answers: number;
                             accuracy: number;
                             /** @enum {string} */
-                            difficulty_level: "unrated" | "easy" | "medium" | "hard";
+                            difficulty_level: "very_easy" | "easy" | "medium" | "hard" | "very_hard";
                         }[];
                         page: number;
                         page_size: number;
@@ -2797,6 +2878,8 @@ export interface operations {
                         rejection_reason: string | null;
                         total_answers: number;
                         accuracy: number;
+                        /** @enum {string} */
+                        difficulty_level: "very_easy" | "easy" | "medium" | "hard" | "very_hard";
                     };
                 };
             };
@@ -2860,6 +2943,8 @@ export interface operations {
                         rejection_reason: string | null;
                         total_answers: number;
                         accuracy: number;
+                        /** @enum {string} */
+                        difficulty_level: "very_easy" | "easy" | "medium" | "hard" | "very_hard";
                     };
                 };
             };
@@ -2962,6 +3047,8 @@ export interface operations {
                         rejection_reason: string | null;
                         total_answers: number;
                         accuracy: number;
+                        /** @enum {string} */
+                        difficulty_level: "very_easy" | "easy" | "medium" | "hard" | "very_hard";
                     };
                 };
             };
@@ -3032,6 +3119,8 @@ export interface operations {
                         rejection_reason: string | null;
                         total_answers: number;
                         accuracy: number;
+                        /** @enum {string} */
+                        difficulty_level: "very_easy" | "easy" | "medium" | "hard" | "very_hard";
                     };
                 };
             };
@@ -3128,10 +3217,11 @@ export interface operations {
                             avg_accuracy: number;
                         }[];
                         by_difficulty: {
+                            very_easy: number;
                             easy: number;
                             medium: number;
                             hard: number;
-                            unrated: number;
+                            very_hard: number;
                         };
                         last_published: {
                             id: string;

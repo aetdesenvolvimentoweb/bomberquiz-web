@@ -37,6 +37,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { useActiveSubjects } from "@/features/content/catalog-api"
+import { DifficultyBadge } from "@/features/content/difficulty-badge"
 import {
   fetchOwnQuestion,
   useDeleteOwnDraftQuestion,
@@ -204,6 +205,7 @@ export function PartnerQuestionsPage() {
                 <TableHead>Enunciado</TableHead>
                 <TableHead>Matéria</TableHead>
                 <TableHead>Status</TableHead>
+                <TableHead>Nível</TableHead>
                 <TableHead>Enviada em</TableHead>
                 <TableHead>Publicada em</TableHead>
                 <TableHead>Imagem</TableHead>
@@ -213,7 +215,7 @@ export function PartnerQuestionsPage() {
             <TableBody>
               {data.items.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center text-sm text-muted-foreground">
+                  <TableCell colSpan={8} className="text-center text-sm text-muted-foreground">
                     Nenhuma pergunta encontrada.
                   </TableCell>
                 </TableRow>
@@ -235,6 +237,17 @@ export function PartnerQuestionsPage() {
                       </Badge>
                       {question.status === "draft" && question.rejection_reason && (
                         <Badge variant="destructive">Rejeitada</Badge>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {question.status === "published" ? (
+                        <DifficultyBadge
+                          level={question.difficulty_level}
+                          totalAnswers={question.total_answers}
+                          accuracy={question.accuracy}
+                        />
+                      ) : (
+                        "—"
                       )}
                     </TableCell>
                     <TableCell className="text-muted-foreground">{formatDate(question.submitted_at)}</TableCell>

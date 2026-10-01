@@ -10,6 +10,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { usePartnerDashboard } from "@/features/content/partner-questions-api"
+import { DIFFICULTY_LABELS, DIFFICULTY_LEVELS } from "@/features/content/difficulty-badge"
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" })
@@ -17,13 +18,6 @@ function formatDate(iso: string): string {
 
 function formatPct(ratio: number): string {
   return `${Math.round(ratio * 100)}%`
-}
-
-const DIFFICULTY_LABELS: Record<string, string> = {
-  easy: "Fácil",
-  medium: "Médio",
-  hard: "Difícil",
-  unrated: "Sem avaliação",
 }
 
 // PART-RF-008 — painel inicial do parceiro: agregados por status/matéria/dificuldade
@@ -78,12 +72,21 @@ export function PartnerDashboardPage() {
               <p className="text-2xl font-semibold">{formatPct(data.engagement.avg_accuracy)}</p>
               <p className="text-xs text-muted-foreground">Acurácia média</p>
             </div>
-            {(["easy", "medium", "hard", "unrated"] as const).map((band) => (
-              <div key={band} className="rounded-lg border p-3 text-center">
-                <p className="text-2xl font-semibold">{data.by_difficulty[band]}</p>
-                <p className="text-xs text-muted-foreground">{DIFFICULTY_LABELS[band]}</p>
-              </div>
-            ))}
+          </div>
+
+          <div>
+            <h2 className="mb-1 font-medium">Publicadas por nível de dificuldade</h2>
+            <p className="mb-3 text-xs text-muted-foreground">
+              Recalculado diariamente pela taxa de acerto dos alunos. Pergunta ainda sem respostas conta como Médio.
+            </p>
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-5">
+              {DIFFICULTY_LEVELS.map((band) => (
+                <div key={band} className="rounded-lg border p-3 text-center">
+                  <p className="text-2xl font-semibold">{data.by_difficulty[band]}</p>
+                  <p className="text-xs text-muted-foreground">{DIFFICULTY_LABELS[band]}</p>
+                </div>
+              ))}
+            </div>
           </div>
 
           <div>

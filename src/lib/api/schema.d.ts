@@ -555,6 +555,41 @@ export interface paths {
         patch: operations["changeUserRole"];
         trace?: never;
     };
+    "/admin/courtesies": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Listar cortesias concedidas */
+        get: operations["listCourtesies"];
+        put?: never;
+        /** Conceder cortesia de assinatura */
+        post: operations["grantCourtesy"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/courtesies/{id}/revoke": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Revogar cortesia (motivo obrigatório) */
+        post: operations["revokeCourtesy"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/me/questions": {
         parameters: {
             query?: never;
@@ -2707,6 +2742,18 @@ export interface operations {
                         users: {
                             active_paid: number;
                             in_trial: number;
+                            active_courtesy: number;
+                        };
+                        courtesies: {
+                            granted_count: number;
+                            total_days_granted: number;
+                            by_category: {
+                                /** @enum {string} */
+                                category: "parceria" | "demonstracao";
+                                count: number;
+                                days: number;
+                            }[];
+                            active_count: number;
                         };
                     };
                 };
@@ -2917,6 +2964,208 @@ export interface operations {
                 content?: never;
             };
             /** @description Dados inválidos */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    listCourtesies: {
+        parameters: {
+            query?: {
+                page?: number;
+                page_size?: number;
+                category?: "parceria" | "demonstracao";
+                granted_by_admin_id?: string;
+                status?: "active" | "expired" | "revoked";
+                created_from?: string;
+                created_to?: string;
+                include_revoked?: "true" | "false";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Lista paginada de cortesias */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: {
+                            id: string;
+                            beneficiary_user_id: string;
+                            beneficiary_name: string;
+                            beneficiary_email: string;
+                            days_granted: number;
+                            /** @enum {string} */
+                            category: "parceria" | "demonstracao";
+                            notes: string | null;
+                            granted_by_admin_id: string;
+                            granted_by_admin_name: string;
+                            /** @enum {string} */
+                            status: "active" | "expired" | "revoked";
+                            start_at: string;
+                            end_at: string;
+                            revoked_at: string | null;
+                            revocation_reason: string | null;
+                            created_at: string;
+                        }[];
+                        page: number;
+                        page_size: number;
+                        total: number;
+                        remaining_for_month: number;
+                        resets_at: string;
+                    };
+                };
+            };
+            /** @description Não autenticado */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Acesso restrito a administradores */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    grantCourtesy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    beneficiary_user_id: string;
+                    days_granted: number;
+                    /** @enum {string} */
+                    category: "parceria" | "demonstracao";
+                    notes?: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Cortesia concedida */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        id: string;
+                        beneficiary_user_id: string;
+                        days_granted: number;
+                        /** @enum {string} */
+                        category: "parceria" | "demonstracao";
+                        start_at: string;
+                        end_at: string;
+                    };
+                };
+            };
+            /** @description Não autenticado */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Acesso restrito a administradores */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Usuário inexistente ou excluído */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Dados inválidos */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Limite de 10 cortesias no mês atingido */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    revokeCourtesy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    reason: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Cortesia revogada */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Não autenticado */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Acesso restrito a administradores */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Cortesia não encontrada */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Cortesia já revogada ou já totalmente usada */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Motivo ausente ou com menos de 10 caracteres */
             422: {
                 headers: {
                     [name: string]: unknown;

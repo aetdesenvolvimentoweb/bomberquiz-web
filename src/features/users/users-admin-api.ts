@@ -20,8 +20,9 @@ export interface AdminUsersFilters {
 const ADMIN_USERS_QUERY_KEY = ["users", "admin-users"] as const
 
 // PROF-RF-011: busca de usuários para promover/revogar parceiro.
-export function useAdminUsers(filters: AdminUsersFilters) {
+export function useAdminUsers(filters: AdminUsersFilters, options: { enabled?: boolean } = {}) {
   return useQuery({
+    enabled: options.enabled ?? true,
     queryKey: [...ADMIN_USERS_QUERY_KEY, filters],
     queryFn: () =>
       unwrap(

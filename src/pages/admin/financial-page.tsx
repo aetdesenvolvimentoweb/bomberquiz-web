@@ -46,6 +46,11 @@ const METODO_LABEL: Record<AdminPayment["method"], string> = {
   mp_balance: "Saldo MP",
 };
 
+const CATEGORIA_CORTESIA_LABEL: Record<"parceria" | "demonstracao", string> = {
+  parceria: "Parceria",
+  demonstracao: "Demonstração",
+};
+
 const STATUS_VARIANT: Record<
   AdminPayment["status"],
   "default" | "secondary" | "destructive" | "outline"
@@ -271,7 +276,31 @@ export function AdminFinancialPage() {
             </div>
           </div>
 
-          <div className="flex gap-6 text-sm text-muted-foreground">
+          {/* Bloco separado da receita de propósito: cortesia nunca é receita (ADR-0006). */}
+          <div className="rounded-lg border p-4">
+            <h2 className="mb-2 text-sm font-medium">Cortesias concedidas no período</h2>
+            {consolidado.courtesies.granted_count === 0 ? (
+              <p className="text-sm text-muted-foreground">Nenhuma cortesia concedida no período.</p>
+            ) : (
+              <ul className="space-y-1 text-sm">
+                {consolidado.courtesies.by_category.map((c) => (
+                  <li key={c.category} className="flex justify-between gap-4">
+                    <span>
+                      {CATEGORIA_CORTESIA_LABEL[c.category]}{" "}
+                      <span className="text-muted-foreground">({c.count})</span>
+                    </span>
+                    <span className="tabular-nums">{c.days} dias</span>
+                  </li>
+                ))}
+                <li className="flex justify-between gap-4 border-t pt-1 font-medium">
+                  <span>Total</span>
+                  <span className="tabular-nums">{consolidado.courtesies.total_days_granted} dias</span>
+                </li>
+              </ul>
+            )}
+          </div>
+
+          <div className="flex flex-wrap gap-x-6 gap-y-1 text-sm text-muted-foreground">
             <span>
               Assinantes pagos ativos:{" "}
               <strong className="text-foreground">
@@ -282,6 +311,18 @@ export function AdminFinancialPage() {
               Em teste grátis:{" "}
               <strong className="text-foreground">
                 {consolidado.users.in_trial}
+              </strong>
+            </span>
+            <span>
+              Com cortesia ativa:{" "}
+              <strong className="text-foreground">
+                {consolidado.users.active_courtesy}
+              </strong>
+            </span>
+            <span>
+              Cortesias ativas:{" "}
+              <strong className="text-foreground">
+                {consolidado.courtesies.active_count}
               </strong>
             </span>
           </div>

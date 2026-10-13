@@ -36,7 +36,16 @@ function buildOverview(overrides: Partial<FinancialOverview["revenue"]> = {}): F
       fee_unknown_count: 0,
       ...overrides,
     },
-    users: { active_paid: 42, in_trial: 18 },
+    users: { active_paid: 42, in_trial: 18, active_courtesy: 5 },
+    courtesies: {
+      granted_count: 3,
+      total_days_granted: 120,
+      by_category: [
+        { category: "parceria", count: 2, days: 90 },
+        { category: "demonstracao", count: 1, days: 30 },
+      ],
+      active_count: 6,
+    },
   }
 }
 
@@ -113,6 +122,21 @@ describe("AdminFinancialPage (SUB-RF-012)", () => {
     expect(cardValue("Estornado")).toBe("R$ 29,90")
     expect(cardValue("Taxas do Mercado Pago")).toBe("R$ 6,00")
     expect(cardValue("Recebido na conta")).toBe("R$ 114,00")
+  })
+
+  it("mostra as cortesias em bloco próprio, em dias e fora da receita", async () => {
+    // Act
+    renderPage()
+    const titulo = await screen.findByText("Cortesias concedidas no período")
+
+    // Assert
+    const bloco = titulo.parentElement!
+    expect(bloco.textContent).toContain("Parceria (2)90 dias")
+    expect(bloco.textContent).toContain("Demonstração (1)30 dias")
+    expect(bloco.textContent).toContain("Total120 dias")
+    expect(screen.getByText("Com cortesia ativa:").textContent).toContain("5")
+    expect(screen.getByText("Cortesias ativas:").textContent).toContain("6")
+    expect(cardValue("Cobrado dos clientes")).toBe("R$ 120,00")
   })
 
   it("abre no mês corrente", async () => {

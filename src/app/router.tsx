@@ -21,6 +21,7 @@ import { ReviewQueuePage } from "@/pages/admin/review-queue-page"
 import { AdminPlansPage } from "@/pages/admin/plans-page"
 import { AdminFinancialPage } from "@/pages/admin/financial-page"
 import { UsersPage } from "@/pages/admin/users-page"
+import { CourtesiesPage } from "@/pages/admin/courtesies-page"
 import { StartQuizPage } from "@/pages/quiz/start-quiz-page"
 import { AnswerQuizPage } from "@/pages/quiz/answer-quiz-page"
 import { ResultQuizPage } from "@/pages/quiz/result-quiz-page"
@@ -97,6 +98,7 @@ export const router = createBrowserRouter([
                       { path: "/painel/planos", element: <AdminPlansPage /> },
                       { path: "/painel/movimentacoes", element: <AdminFinancialPage /> },
                       { path: "/painel/usuarios", element: <UsersPage /> },
+                      { path: "/painel/cortesias", element: <CourtesiesPage /> },
                     ],
                   },
                 ],

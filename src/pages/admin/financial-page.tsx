@@ -182,7 +182,11 @@ export function AdminFinancialPage() {
             <Card
               titulo="Cobrado dos clientes"
               valor={formatCentsToBRL(consolidado.revenue.total_cents)}
-              detalhe={`${consolidado.revenue.count} compra(s) no período`}
+              detalhe={
+                consolidado.revenue.discounts_applied_cents > 0
+                  ? `${consolidado.revenue.count} compra(s) · ${formatCentsToBRL(consolidado.revenue.discounts_applied_cents)} em cupons`
+                  : `${consolidado.revenue.count} compra(s) no período`
+              }
             />
             <Card
               titulo="Estornado"

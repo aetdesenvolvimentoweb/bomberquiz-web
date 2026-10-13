@@ -94,6 +94,8 @@ export function checkoutErrorMessage(error: ApiError): string {
       const max = error.details?.max_installments
       return typeof max === "number" ? `Escolha entre 1 e ${max} parcelas.` : "Número de parcelas inválido."
     }
+    case "coupon_invalid":
+      return "Cupom inválido ou expirado. O pagamento não foi feito; tente de novo sem ele."
     case "too_many_pending_checkouts":
       return "Você já tem um pagamento em andamento. Aguarde a confirmação antes de tentar de novo."
     case "payment_gateway_error":

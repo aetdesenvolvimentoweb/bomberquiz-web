@@ -16,6 +16,7 @@ const PANEL_NAV_ITEMS: NavEntry[] = [
       { to: "/painel/movimentacoes", label: "Movimentações" },
       { to: "/painel/planos", label: "Planos" },
       { to: "/painel/cortesias", label: "Cortesias" },
+      { to: "/painel/cupons", label: "Cupons" },
     ],
   },
   { to: "/painel/usuarios", label: "Usuários" },

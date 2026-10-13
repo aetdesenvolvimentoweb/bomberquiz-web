@@ -590,6 +590,41 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/coupons": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Listar cupons */
+        get: operations["listCoupons"];
+        put?: never;
+        /** Criar cupom de desconto */
+        post: operations["createCoupon"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/coupons/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Editar validade final, limite de usos ou ativar/desativar cupom */
+        patch: operations["updateCoupon"];
+        trace?: never;
+    };
     "/me/questions": {
         parameters: {
             query?: never;
@@ -825,6 +860,23 @@ export interface paths {
         get: operations["listPlans"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/checkout/coupon-preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Conferir cupom e calcular o preço com desconto */
+        post: operations["previewCoupon"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2733,6 +2785,7 @@ export interface operations {
                                 count: number;
                                 total_cents: number;
                             }[];
+                            discounts_applied_cents: number;
                             refunded_cents: number;
                             refunded_count: number;
                             fee_cents: number;
@@ -3166,6 +3219,211 @@ export interface operations {
                 content?: never;
             };
             /** @description Motivo ausente ou com menos de 10 caracteres */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    listCoupons: {
+        parameters: {
+            query?: {
+                page?: number;
+                page_size?: number;
+                is_active?: "true" | "false";
+                valid_at?: "now" | string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Lista paginada de cupons */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: {
+                            id: string;
+                            code: string;
+                            /** @enum {string} */
+                            discount_type: "percent" | "fixed_cents";
+                            discount_value: number;
+                            valid_from: string | null;
+                            valid_until: string | null;
+                            max_uses: number | null;
+                            used_count: number;
+                            is_active: boolean;
+                            applies_to_plan_slugs: ("monthly" | "quarterly" | "semiannual" | "annual")[] | null;
+                            created_at: string;
+                        }[];
+                        page: number;
+                        page_size: number;
+                        total: number;
+                    };
+                };
+            };
+            /** @description Não autenticado */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Acesso restrito a administradores */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    createCoupon: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    code: string;
+                    /** @enum {string} */
+                    discount_type: "percent" | "fixed_cents";
+                    discount_value: number;
+                    /** Format: date-time */
+                    valid_from?: string | null;
+                    /** Format: date-time */
+                    valid_until?: string | null;
+                    max_uses?: number | null;
+                    applies_to_plan_slugs?: ("monthly" | "quarterly" | "semiannual" | "annual")[] | null;
+                };
+            };
+        };
+        responses: {
+            /** @description Cupom criado */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        id: string;
+                        code: string;
+                        /** @enum {string} */
+                        discount_type: "percent" | "fixed_cents";
+                        discount_value: number;
+                        valid_from: string | null;
+                        valid_until: string | null;
+                        max_uses: number | null;
+                        used_count: number;
+                        is_active: boolean;
+                        applies_to_plan_slugs: ("monthly" | "quarterly" | "semiannual" | "annual")[] | null;
+                        created_at: string;
+                    };
+                };
+            };
+            /** @description Não autenticado */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Acesso restrito a administradores */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Código já usado por outro cupom */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Dados inválidos */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    updateCoupon: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    /** Format: date-time */
+                    valid_until?: string | null;
+                    max_uses?: number | null;
+                    is_active?: boolean;
+                };
+            };
+        };
+        responses: {
+            /** @description Cupom atualizado */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        id: string;
+                        code: string;
+                        /** @enum {string} */
+                        discount_type: "percent" | "fixed_cents";
+                        discount_value: number;
+                        valid_from: string | null;
+                        valid_until: string | null;
+                        max_uses: number | null;
+                        used_count: number;
+                        is_active: boolean;
+                        applies_to_plan_slugs: ("monthly" | "quarterly" | "semiannual" | "annual")[] | null;
+                        created_at: string;
+                    };
+                };
+            };
+            /** @description Não autenticado */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Acesso restrito a administradores */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Cupom não encontrado */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Dados inválidos */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -4185,6 +4443,59 @@ export interface operations {
             };
         };
     };
+    previewCoupon: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    /** @enum {string} */
+                    plan_slug: "monthly" | "quarterly" | "semiannual" | "annual";
+                    /** @enum {string} */
+                    method: "pix" | "mp_balance" | "card";
+                    coupon_code: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Resultado da conferência */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {boolean} */
+                        valid: true;
+                        gross_amount: number;
+                        discount_amount: number;
+                        net_amount: number;
+                    } | {
+                        /** @enum {boolean} */
+                        valid: false;
+                    };
+                };
+            };
+            /** @description Não autenticado */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Plano indisponível */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     checkout: {
         parameters: {
             query?: never;
@@ -4203,6 +4514,7 @@ export interface operations {
                     payment_method_id?: string;
                     device_id?: string;
                     installments?: number;
+                    coupon_code?: string;
                 };
             };
         };
@@ -4246,7 +4558,7 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description Plano indisponível, método não suportado, parcelas inválidas ou token de cartão ausente */
+            /** @description Plano indisponível, método não suportado, parcelas inválidas, token de cartão ausente ou cupom inválido (`coupon_invalid`) */
             422: {
                 headers: {
                     [name: string]: unknown;

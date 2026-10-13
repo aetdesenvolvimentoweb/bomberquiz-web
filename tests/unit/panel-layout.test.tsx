@@ -75,7 +75,7 @@ describe("PanelLayout", () => {
     expect(labels).toEqual(["Eixos", "Matérias", "Perguntas", "Revisão"])
   })
 
-  it("agrupa Movimentações, Planos e Cortesias no menu Financeiro", async () => {
+  it("agrupa Movimentações, Planos, Cortesias e Cupons no menu Financeiro", async () => {
     renderPanelLayout()
     const user = userEvent.setup()
 
@@ -89,6 +89,7 @@ describe("PanelLayout", () => {
     )
     expect(within(menu).getByRole("menuitem", { name: "Planos" })).toHaveAttribute("href", "/painel/planos")
     expect(within(menu).getByRole("menuitem", { name: "Cortesias" })).toHaveAttribute("href", "/painel/cortesias")
+    expect(within(menu).getByRole("menuitem", { name: "Cupons" })).toHaveAttribute("href", "/painel/cupons")
   })
 
   it("abre o menu mobile pelo hambúrguer e fecha ao clicar num link", async () => {

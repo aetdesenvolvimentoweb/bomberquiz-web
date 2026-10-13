@@ -181,7 +181,14 @@ export function PaymentsHistoryPage() {
                   <TableCell className="text-muted-foreground">
                     {new Date(payment.created_at).toLocaleDateString("pt-BR")}
                   </TableCell>
-                  <TableCell className="text-right">{formatCentsToBRL(payment.net_amount)}</TableCell>
+                  <TableCell className="text-right">
+                    {formatCentsToBRL(payment.net_amount)}
+                    {payment.discount_amount > 0 && (
+                      <p className="text-xs text-muted-foreground">
+                        Desconto de {formatCentsToBRL(payment.discount_amount)}
+                      </p>
+                    )}
+                  </TableCell>
                   <TableCell className="text-right space-x-2">
                     {payment.mp_receipt_url && (
                       <Button asChild variant="outline" size="sm">

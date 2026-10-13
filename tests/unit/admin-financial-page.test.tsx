@@ -29,6 +29,7 @@ function buildOverview(overrides: Partial<FinancialOverview["revenue"]> = {}): F
       count: 4,
       by_plan: [{ plan_slug: "monthly", plan_name: "Mensal", count: 4, total_cents: 12000 }],
       by_method: [{ method: "pix", count: 4, total_cents: 12000 }],
+      discounts_applied_cents: 0,
       refunded_cents: 2990,
       refunded_count: 1,
       fee_cents: 600,
@@ -227,5 +228,15 @@ describe("AdminFinancialPage (SUB-RF-012)", () => {
 
     // Assert
     expect(await screen.findByText("Nenhuma transação com esses filtros.")).toBeInTheDocument()
+  })
+})
+
+describe("AdminFinancialPage — cupons (SUB-RF-012 CA-3)", () => {
+  it("mostra os descontos de cupom junto do cobrado, quando houver", async () => {
+    // Act
+    renderPage(buildOverview({ discounts_applied_cents: 1500 }))
+
+    // Assert
+    expect(await screen.findByText(/4 compra\(s\) · R\$\s15,00 em cupons/)).toBeInTheDocument()
   })
 })

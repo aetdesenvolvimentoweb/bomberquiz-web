@@ -25,6 +25,20 @@ export function usePlans() {
   })
 }
 
+export type CouponPreviewBody = NonNullable<
+  paths["/me/checkout/coupon-preview"]["post"]["requestBody"]
+>["content"]["application/json"]
+export type CouponPreview =
+  paths["/me/checkout/coupon-preview"]["post"]["responses"][200]["content"]["application/json"]
+
+// Botão "Aplicar": confere o cupom antes do pagamento. Mutation, não query: é
+// disparada pelo clique (e de novo ao trocar plano ou método), não pela tela.
+export function useCouponPreview() {
+  return useMutation({
+    mutationFn: (body: CouponPreviewBody) => unwrap(apiClient.POST("/me/checkout/coupon-preview", { body })),
+  })
+}
+
 export function useCheckout() {
   const queryClient = useQueryClient()
   return useMutation({

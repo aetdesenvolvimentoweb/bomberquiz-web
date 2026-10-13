@@ -62,6 +62,7 @@ describe("PanelLayout", () => {
     expect(screen.getByRole("link", { name: "Perguntas" })).toBeInTheDocument()
     expect(screen.getByRole("link", { name: "Revisão" })).toBeInTheDocument()
     expect(screen.getByRole("link", { name: "Planos" })).toBeInTheDocument()
+    expect(screen.getByRole("link", { name: "Usuários" })).toBeInTheDocument()
     expect(await screen.findByRole("button", { name: /Ana/ })).toBeInTheDocument()
   })
 

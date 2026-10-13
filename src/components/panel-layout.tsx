@@ -7,6 +7,7 @@ const PANEL_NAV_ITEMS: NavItem[] = [
   { to: "/painel/revisao", label: "Revisão" },
   { to: "/painel/planos", label: "Planos" },
   { to: "/painel/financeiro", label: "Financeiro" },
+  { to: "/painel/usuarios", label: "Usuários" },
 ]
 
 // Header da área administrativa (/painel/*).

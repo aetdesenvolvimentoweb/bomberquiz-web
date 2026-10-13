@@ -15,6 +15,7 @@ import {
 import { useAdminUsers } from "@/features/users/users-admin-api"
 import { useGrantCourtesy, type CourtesyCategory } from "@/features/courtesies/courtesies-admin-api"
 import { ApiError } from "@/lib/api/errors"
+import { formatDateWithTime } from "@/lib/dates"
 
 const SELECT_CLASS =
   "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -70,7 +71,7 @@ export function GrantCourtesyDialog({ open, onOpenChange }: GrantCourtesyDialogP
         category,
         notes: notes.trim() || undefined,
       })
-      toast.success(`Cortesia concedida a ${beneficiary.name}, válida até ${formatDate(granted.end_at)}.`)
+      toast.success(`Cortesia concedida a ${beneficiary.name}, válida até ${formatDateWithTime(granted.end_at)}.`)
       onOpenChange(false)
     } catch (err) {
       if (err instanceof ApiError && err.code === "courtesy_monthly_limit" && typeof err.details?.resets_at === "string") {

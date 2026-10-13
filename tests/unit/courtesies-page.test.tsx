@@ -148,7 +148,7 @@ describe("CourtesiesPage (SUB-RF-008 a 010)", () => {
         body: { beneficiary_user_id: "user-9", days_granted: 45, category: "demonstracao", notes: "Divulgação" },
       }),
     )
-    expect(toast.success).toHaveBeenCalledWith("Cortesia concedida a Bruno Souza, válida até 27/11/2026.")
+    expect(toast.success).toHaveBeenCalledWith("Cortesia concedida a Bruno Souza, válida até 27/11/2026 às 9h.")
   })
 
   it("explica quando renova o limite se a API recusar com 429", async () => {

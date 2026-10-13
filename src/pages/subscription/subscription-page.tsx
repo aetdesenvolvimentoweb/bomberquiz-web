@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Spinner } from "@/components/ui/spinner"
 import { formatCentsToBRL } from "@/features/subscription/schemas"
 import { useMySubscription } from "@/features/subscription/subscription-api"
+import { formatDateWithTime } from "@/lib/dates"
 
 const SOURCE_LABELS: Record<string, string> = {
   trial: "Período de teste",
@@ -45,7 +46,7 @@ export function SubscriptionPage() {
         <CardContent className="space-y-4">
           {data.current_subscription && (
             <p className="text-sm text-muted-foreground">
-              Válida até {new Date(data.current_subscription.end_at).toLocaleDateString("pt-BR")} — restam{" "}
+              Válida até {formatDateWithTime(data.current_subscription.end_at)} — restam{" "}
               {data.current_subscription.remaining_days}{" "}
               {data.current_subscription.remaining_days === 1 ? "dia" : "dias"}.
             </p>

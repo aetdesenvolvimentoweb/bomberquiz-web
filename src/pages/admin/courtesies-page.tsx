@@ -32,6 +32,7 @@ import {
   type CourtesyStatusFilter,
 } from "@/features/courtesies/courtesies-admin-api"
 import { ApiError } from "@/lib/api/errors"
+import { formatDateWithTime } from "@/lib/dates"
 import { GrantCourtesyDialog } from "./grant-courtesy-dialog"
 
 const PAGE_SIZE = 20
@@ -195,7 +196,7 @@ export function CourtesiesPage() {
                     <div className="text-xs">{formatDate(courtesy.created_at)}</div>
                   </TableCell>
                   <TableCell className="text-muted-foreground">
-                    {formatDate(courtesy.start_at)} a {formatDate(courtesy.end_at)}
+                    {formatDate(courtesy.start_at)} a {formatDateWithTime(courtesy.end_at)}
                   </TableCell>
                   <TableCell>
                     <Badge variant={STATUS_VARIANTS[courtesy.status]}>{STATUS_LABELS[courtesy.status]}</Badge>

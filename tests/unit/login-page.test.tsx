@@ -1,7 +1,7 @@
 import { describe, expect, it, vi, beforeEach } from "vitest"
 import { render, screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { MemoryRouter } from "react-router-dom"
+import { MemoryRouter, Routes, Route } from "react-router-dom"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { toast } from "sonner"
 import { LoginPage } from "@/pages/auth/login-page"
@@ -38,6 +38,8 @@ async function submitLoginForm() {
 
 beforeEach(() => {
   mockedApiClient.POST.mockReset()
+  vi.mocked(toast.error).mockReset()
+  vi.mocked(toast.success).mockReset()
 })
 
 describe("LoginPage", () => {
@@ -83,5 +85,82 @@ describe("LoginPage", () => {
     await submitLoginForm()
 
     await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Não foi possível entrar."))
+  })
+})
+
+describe("LoginPage — conta desativada (PROF-RF-007 CA-3 / PROF-RF-008)", () => {
+  const inactiveError = {
+    data: undefined,
+    error: {
+      error: {
+        code: "account_inactive",
+        message: "Sua conta está desativada.",
+        details: { reason: "account_inactive" },
+        request_id: "req-1",
+      },
+    },
+    response: new Response(null, { status: 403 }),
+  }
+
+  const reactivated = {
+    data: {
+      user: { id: "u-1", name: "Bombeiro", email: "bombeiro@example.com", status: "active" },
+      requires_consent_renewal: false,
+    },
+    error: undefined,
+    response: new Response(null, { status: 200 }),
+  }
+
+  function renderWithHome() {
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    return render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter initialEntries={["/login"]}>
+          <Routes>
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/inicio" element={<div data-testid="home" />} />
+          </Routes>
+        </MemoryRouter>
+      </QueryClientProvider>,
+    )
+  }
+
+  it("403 account_inactive troca o formulário pela oferta de reativação", async () => {
+    mockedApiClient.POST.mockResolvedValue(inactiveError)
+    renderWithHome()
+
+    await submitLoginForm()
+
+    expect(await screen.findByRole("button", { name: "Reativar conta" })).toBeInTheDocument()
+    expect(screen.getByText("Sua conta está desativada. Deseja reativar?")).toBeInTheDocument()
+    expect(toast.error).not.toHaveBeenCalled()
+  })
+
+  it("Reativar conta manda o e-mail e a senha já digitados e entra", async () => {
+    mockedApiClient.POST.mockResolvedValueOnce(inactiveError).mockResolvedValueOnce(reactivated)
+    renderWithHome()
+    const user = userEvent.setup()
+
+    await submitLoginForm()
+    await user.click(await screen.findByRole("button", { name: "Reativar conta" }))
+
+    await waitFor(() =>
+      expect(mockedApiClient.POST).toHaveBeenLastCalledWith("/auth/reactivate", {
+        body: { email: "bombeiro@example.com", password: "senha-qualquer" },
+      }),
+    )
+    expect(await screen.findByTestId("home")).toBeInTheDocument()
+    expect(toast.success).toHaveBeenCalledWith("Conta reativada. Que bom ter você de volta!")
+  })
+
+  it("Voltar retorna ao formulário de login", async () => {
+    mockedApiClient.POST.mockResolvedValue(inactiveError)
+    renderWithHome()
+    const user = userEvent.setup()
+
+    await submitLoginForm()
+    await user.click(await screen.findByRole("button", { name: "Voltar" }))
+
+    expect(screen.getByRole("button", { name: /entrar/i })).toBeInTheDocument()
   })
 })

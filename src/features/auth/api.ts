@@ -45,6 +45,26 @@ export function useLogin() {
   })
 }
 
+// PROF-RF-008 — reativa a conta desativada com a senha já digitada no login e
+// entra na mesma chamada (a resposta é igual à do login).
+export function useReactivateAccount() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (values: { email: string; password: string }) => {
+      const data = await unwrap(apiClient.POST("/auth/reactivate", { body: values }))
+      if (!data?.user) throw new Error("Resposta de reativação inválida.")
+      return data
+    },
+    onSuccess: (data) => {
+      queryClient.setQueryData(SESSION_QUERY_KEY, {
+        user: data.user,
+        requiresConsentRenewal: data.requires_consent_renewal,
+      })
+    },
+  })
+}
+
 export function useLogout() {
   const queryClient = useQueryClient()
 

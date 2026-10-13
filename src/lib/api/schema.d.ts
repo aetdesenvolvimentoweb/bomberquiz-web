@@ -38,6 +38,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/auth/reactivate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reativar conta desativada e entrar (PROF-RF-008) */
+        post: operations["reactivateAccount"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/auth/logout": {
         parameters: {
             query?: never;
@@ -1133,8 +1150,72 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description E-mail não verificado */
+            /** @description E-mail não verificado (`email_not_verified`) ou conta desativada (`account_inactive`, PROF-RF-007 CA-3) */
             403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Rate limit — tente novamente mais tarde */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    reactivateAccount: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    /** Format: email */
+                    email: string;
+                    password: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Conta reativada e sessão emitida */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        user: {
+                            id: string;
+                            name: string;
+                            /** Format: email */
+                            email: string;
+                            phone: string;
+                            dob: string | null;
+                            /** @enum {string|null} */
+                            sex: "masculino" | "feminino" | "prefere_nao_informar" | null;
+                            avatarUrl: string | null;
+                            emailVerifiedAt: string | null;
+                            /** @enum {string} */
+                            role: "client" | "partner" | "admin";
+                            /** @enum {string} */
+                            status: "active" | "inactive" | "deleted";
+                            consentVersion: number;
+                            trialUsedAt: string | null;
+                            lastLoginAt: string | null;
+                            createdAt: string;
+                        };
+                        requires_consent_renewal: boolean;
+                    };
+                };
+            };
+            /** @description Credenciais inválidas (também para conta inexistente ou excluída) */
+            401: {
                 headers: {
                     [name: string]: unknown;
                 };

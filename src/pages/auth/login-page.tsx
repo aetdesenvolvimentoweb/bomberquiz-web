@@ -9,11 +9,12 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { useLogin } from "@/features/auth/api";
+import { useLogin, useReactivateAccount } from "@/features/auth/api";
 import { loginSchema, type LoginFormValues } from "@/features/auth/schemas";
 import { ApiError } from "@/lib/api/errors";
 import { applyServerFieldErrors } from "@/lib/api/form-errors";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import {
   Link,
@@ -27,6 +28,12 @@ export function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation() as Location & { state?: { from?: Location } };
   const loginMutation = useLogin();
+  const reactivateMutation = useReactivateAccount();
+  // PROF-RF-007 CA-3 / PROF-RF-008: credenciais de uma conta desativada,
+  // guardadas para reativar sem pedir a senha de novo.
+  const [inactiveCredentials, setInactiveCredentials] =
+    useState<LoginFormValues | null>(null);
+  const redirectTo = location.state?.from?.pathname ?? "/inicio";
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -36,10 +43,13 @@ export function LoginPage() {
   async function onSubmit(values: LoginFormValues) {
     try {
       await loginMutation.mutateAsync(values);
-      const redirectTo = location.state?.from?.pathname ?? "/inicio";
       navigate(redirectTo, { replace: true });
     } catch (err) {
       if (applyServerFieldErrors(form, err)) return;
+      if (err instanceof ApiError && err.code === "account_inactive") {
+        setInactiveCredentials(values);
+        return;
+      }
       if (err instanceof ApiError && err.code === "email_not_verified") {
         toast.error(err.message, {
           action: {
@@ -56,6 +66,52 @@ export function LoginPage() {
         err instanceof ApiError ? err.message : "Não foi possível entrar.";
       toast.error(message);
     }
+  }
+
+  async function onReactivate() {
+    if (!inactiveCredentials) return;
+    try {
+      await reactivateMutation.mutateAsync(inactiveCredentials);
+      toast.success("Conta reativada. Que bom ter você de volta!");
+      navigate(redirectTo, { replace: true });
+    } catch (err) {
+      const message =
+        err instanceof ApiError
+          ? err.message
+          : "Não foi possível reativar a conta.";
+      toast.error(message);
+    }
+  }
+
+  if (inactiveCredentials) {
+    return (
+      <AuthLayout
+        title="Conta desativada"
+        description="Sua conta está desativada. Deseja reativar?"
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            Seus dados foram preservados. Ao reativar, você entra
+            normalmente com a conta {inactiveCredentials.email}.
+          </p>
+          <Button
+            className="w-full"
+            loading={reactivateMutation.isPending}
+            onClick={onReactivate}
+          >
+            {reactivateMutation.isPending ? "Reativando…" : "Reativar conta"}
+          </Button>
+          <Button
+            variant="outline"
+            className="w-full"
+            disabled={reactivateMutation.isPending}
+            onClick={() => setInactiveCredentials(null)}
+          >
+            Voltar
+          </Button>
+        </div>
+      </AuthLayout>
+    );
   }
 
   return (

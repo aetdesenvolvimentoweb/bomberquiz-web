@@ -53,17 +53,41 @@ beforeEach(() => {
 })
 
 describe("PanelLayout", () => {
-  it("renderiza a marca, os links de navegação e o nome do usuário", async () => {
+  it("renderiza os menus Quiz e Financeiro, o link Usuários e o nome do usuário", async () => {
     renderPanelLayout()
 
     expect(await screen.findByText("Conteúdo de Eixos")).toBeInTheDocument()
-    expect(screen.getByRole("link", { name: "Eixos" })).toBeInTheDocument()
-    expect(screen.getByRole("link", { name: "Matérias" })).toBeInTheDocument()
-    expect(screen.getByRole("link", { name: "Perguntas" })).toBeInTheDocument()
-    expect(screen.getByRole("link", { name: "Revisão" })).toBeInTheDocument()
-    expect(screen.getByRole("link", { name: "Planos" })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Quiz" })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "Financeiro" })).toBeInTheDocument()
     expect(screen.getByRole("link", { name: "Usuários" })).toBeInTheDocument()
     expect(await screen.findByRole("button", { name: /Ana/ })).toBeInTheDocument()
+  })
+
+  it("agrupa Eixos, Matérias, Perguntas e Revisão no menu Quiz", async () => {
+    renderPanelLayout()
+    const user = userEvent.setup()
+
+    await screen.findByText("Conteúdo de Eixos")
+    await user.click(screen.getByRole("button", { name: "Quiz" }))
+
+    const menu = await screen.findByRole("menu")
+    const labels = within(menu).getAllByRole("menuitem").map((item) => item.textContent)
+    expect(labels).toEqual(["Eixos", "Matérias", "Perguntas", "Revisão"])
+  })
+
+  it("agrupa Movimentações e Planos no menu Financeiro", async () => {
+    renderPanelLayout()
+    const user = userEvent.setup()
+
+    await screen.findByText("Conteúdo de Eixos")
+    await user.click(screen.getByRole("button", { name: "Financeiro" }))
+
+    const menu = await screen.findByRole("menu")
+    expect(within(menu).getByRole("menuitem", { name: "Movimentações" })).toHaveAttribute(
+      "href",
+      "/painel/movimentacoes",
+    )
+    expect(within(menu).getByRole("menuitem", { name: "Planos" })).toHaveAttribute("href", "/painel/planos")
   })
 
   it("abre o menu mobile pelo hambúrguer e fecha ao clicar num link", async () => {

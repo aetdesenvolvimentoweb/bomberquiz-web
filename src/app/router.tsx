@@ -95,7 +95,7 @@ export const router = createBrowserRouter([
                       { path: "/painel/perguntas", element: <QuestionsPage /> },
                       { path: "/painel/revisao", element: <ReviewQueuePage /> },
                       { path: "/painel/planos", element: <AdminPlansPage /> },
-                      { path: "/painel/financeiro", element: <AdminFinancialPage /> },
+                      { path: "/painel/movimentacoes", element: <AdminFinancialPage /> },
                       { path: "/painel/usuarios", element: <UsersPage /> },
                     ],
                   },

@@ -126,7 +126,7 @@ export function AdminFinancialPage() {
     <div className="space-y-6 px-6 py-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold">Financeiro</h1>
+          <h1 className="text-2xl font-semibold">Movimentações</h1>
           <p className="text-sm text-muted-foreground">
             Compras, estornos, taxas do Mercado Pago e o que de fato entrou na
             conta.

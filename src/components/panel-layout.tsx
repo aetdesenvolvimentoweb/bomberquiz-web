@@ -1,12 +1,22 @@
-import { NavShell, type NavItem } from "@/components/nav-shell"
+import { NavShell, type NavEntry } from "@/components/nav-shell"
 
-const PANEL_NAV_ITEMS: NavItem[] = [
-  { to: "/painel/eixos", label: "Eixos" },
-  { to: "/painel/materias", label: "Matérias" },
-  { to: "/painel/perguntas", label: "Perguntas" },
-  { to: "/painel/revisao", label: "Revisão" },
-  { to: "/painel/planos", label: "Planos" },
-  { to: "/painel/financeiro", label: "Financeiro" },
+const PANEL_NAV_ITEMS: NavEntry[] = [
+  {
+    label: "Quiz",
+    items: [
+      { to: "/painel/eixos", label: "Eixos" },
+      { to: "/painel/materias", label: "Matérias" },
+      { to: "/painel/perguntas", label: "Perguntas" },
+      { to: "/painel/revisao", label: "Revisão" },
+    ],
+  },
+  {
+    label: "Financeiro",
+    items: [
+      { to: "/painel/movimentacoes", label: "Movimentações" },
+      { to: "/painel/planos", label: "Planos" },
+    ],
+  },
   { to: "/painel/usuarios", label: "Usuários" },
 ]
 

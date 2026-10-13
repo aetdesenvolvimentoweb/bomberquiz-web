@@ -1,6 +1,6 @@
 import { useState } from "react"
-import { NavLink, Outlet, Link } from "react-router-dom"
-import { Menu, LogOut } from "lucide-react"
+import { NavLink, Outlet, Link, useLocation } from "react-router-dom"
+import { Menu, LogOut, ChevronDown } from "lucide-react"
 import { Brand } from "@/components/brand"
 import { Button } from "@/components/ui/button"
 import {
@@ -23,6 +23,13 @@ import { getInitials } from "@/lib/initials"
 import { cn } from "@/lib/utils"
 
 export type NavItem = { to: string; label: string }
+// Grupo vira dropdown no desktop e seção com título no drawer mobile.
+export type NavGroup = { label: string; items: NavItem[] }
+export type NavEntry = NavItem | NavGroup
+
+function isNavGroup(entry: NavEntry): entry is NavGroup {
+  return "items" in entry
+}
 
 function navLinkClassName({ isActive }: { isActive: boolean }): string {
   return cn(
@@ -34,8 +41,9 @@ function navLinkClassName({ isActive }: { isActive: boolean }): string {
 // Header compartilhado das áreas autenticadas do app — mobile-first:
 // nav vira drawer lateral (Sheet) abaixo de md, inline acima disso.
 // navItems é definido por cada layout que usa esse shell (painel admin, app autenticado, etc).
-export function NavShell({ navItems }: { navItems: NavItem[] }) {
+export function NavShell({ navItems }: { navItems: NavEntry[] }) {
   const { user } = useSession()
+  const { pathname } = useLocation()
   const logoutMutation = useLogout()
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
 
@@ -46,11 +54,34 @@ export function NavShell({ navItems }: { navItems: NavItem[] }) {
           <div className="flex items-center gap-6">
             <Brand />
             <nav className="hidden items-center gap-4 md:flex">
-              {navItems.map((item) => (
-                <NavLink key={item.to} to={item.to} className={navLinkClassName}>
-                  {item.label}
-                </NavLink>
-              ))}
+              {navItems.map((entry) =>
+                isNavGroup(entry) ? (
+                  <DropdownMenu key={entry.label}>
+                    <DropdownMenuTrigger
+                      className={cn(
+                        navLinkClassName({
+                          isActive: entry.items.some((item) => pathname.startsWith(item.to)),
+                        }),
+                        "flex items-center gap-1 outline-none",
+                      )}
+                    >
+                      {entry.label}
+                      <ChevronDown className="h-4 w-4" />
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start">
+                      {entry.items.map((item) => (
+                        <DropdownMenuItem key={item.to} asChild>
+                          <Link to={item.to}>{item.label}</Link>
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                ) : (
+                  <NavLink key={entry.to} to={entry.to} className={navLinkClassName}>
+                    {entry.label}
+                  </NavLink>
+                ),
+              )}
             </nav>
           </div>
 
@@ -121,21 +152,20 @@ export function NavShell({ navItems }: { navItems: NavItem[] }) {
           </SheetHeader>
 
           <nav className="flex flex-col gap-1 pt-2">
-            {navItems.map((item) => (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                onClick={() => setMobileNavOpen(false)}
-                className={({ isActive }) =>
-                  cn(
-                    "rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-muted",
-                    isActive ? "bg-muted text-foreground" : "text-muted-foreground",
-                  )
-                }
-              >
-                {item.label}
-              </NavLink>
-            ))}
+            {navItems.map((entry) =>
+              isNavGroup(entry) ? (
+                <div key={entry.label} className="flex flex-col gap-1 pt-2">
+                  <span className="px-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    {entry.label}
+                  </span>
+                  {entry.items.map((item) => (
+                    <MobileNavLink key={item.to} item={item} onNavigate={() => setMobileNavOpen(false)} />
+                  ))}
+                </div>
+              ) : (
+                <MobileNavLink key={entry.to} item={entry} onNavigate={() => setMobileNavOpen(false)} />
+              ),
+            )}
           </nav>
 
           {user && (
@@ -188,5 +218,22 @@ export function NavShell({ navItems }: { navItems: NavItem[] }) {
         <Outlet />
       </main>
     </div>
+  )
+}
+
+function MobileNavLink({ item, onNavigate }: { item: NavItem; onNavigate: () => void }) {
+  return (
+    <NavLink
+      to={item.to}
+      onClick={onNavigate}
+      className={({ isActive }) =>
+        cn(
+          "rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-muted",
+          isActive ? "bg-muted text-foreground" : "text-muted-foreground",
+        )
+      }
+    >
+      {item.label}
+    </NavLink>
   )
 }

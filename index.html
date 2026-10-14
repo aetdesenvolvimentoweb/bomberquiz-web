@@ -3,13 +3,19 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="theme-color" content="#0f172a" />
+    <meta name="theme-color" content="#003049" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="BomberQuiz" />
-    <link rel="icon" type="image/svg+xml" href="/icons/icon-192.svg" />
-    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <!--
+      Ícones gerados por `tools/icons.mjs` a partir de `assets-src/icone/bq.webp`.
+      Sem SVG: o desenho é ilustração rasterizada, e um SVG embrulhando PNG só
+      dobraria o download. O .ico traz 16/32/48 (recorte fechado no capacete);
+      o PNG de 192 serve às abas de tela de alta densidade.
+    -->
+    <link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <title>BomberQuiz — Quiz para o TAP do CBMGO</title>
     <meta name="description" content="Quiz das matérias cobradas no Teste de Avaliação Profissional do Corpo de Bombeiros Militar de Goiás. 7 dias grátis." />

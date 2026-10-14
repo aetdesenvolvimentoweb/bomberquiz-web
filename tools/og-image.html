@@ -3,12 +3,13 @@
   Fonte da imagem de prévia de link (`public/og-image.png`, 1200×630) — a que
   WhatsApp, Instagram e afins mostram quando alguém compartilha o endereço do app.
 
-  É PROVISÓRIA: feita em HTML porque não havia ferramenta de imagem no ambiente,
-  e mantida aqui para ser reproduzível. Sem a fonte, "provisória" viraria
-  permanente — ninguém troca o que não sabe como foi feito.
+  Feita em HTML e mantida aqui para ser reproduzível: ninguém troca o que não
+  sabe como foi feito. As imagens vêm do próprio projeto (ícone gerado por
+  `tools/icons.mjs` e o mascote `bq_welcome`), então regere o ícone ANTES se ele
+  mudar.
 
-  Para regerar depois de editar este arquivo (precisa do Playwright da skill
-  `run-bomberquiz-web`, que já tem o Chromium baixado):
+  Para regerar depois de editar este arquivo, a partir de `web/` (precisa do
+  Playwright da skill `run-bomberquiz-web`, que já tem o Chromium baixado):
 
     node -e '
       const { createRequire } = require("node:module")
@@ -17,37 +18,58 @@
       chromium.launch().then(async (b) => {
         const p = await b.newPage({ viewport: { width: 1200, height: 630 } })
         await p.goto("file://" + process.cwd() + "/tools/og-image.html")
+        await p.waitForLoadState("networkidle")
         await p.screenshot({ path: "public/og-image.png" })
         await b.close()
       })
     '
 
-  Cores tiradas dos tokens reais do app (`src/index.css`): fundo `#0f172a`
-  (`--background` escuro) e destaque `#E44444`, que é `--ember` no tema escuro —
-  o mesmo vermelho do "Quiz" na marca. Ao substituir por uma arte definitiva,
-  mantenha 1200×630 e o texto longe das bordas: alguns aplicativos recortam.
+  E depois comprima (o screenshot sai com ~300KB, e o WhatsApp deixa de mostrar
+  a imagem da prévia perto disso; com paleta cai para ~85KB sem diferença
+  visível — confira o brilho laranja, que é onde faixas apareceriam):
+
+    node -e '
+      const sharp = require(process.env.SHARP_PATH ?? "sharp")
+      sharp("public/og-image.png").png({ palette: true, quality: 90, effort: 10 })
+        .toBuffer().then((b) => require("node:fs").writeFileSync("public/og-image.png", b))
+    '
+
+  Cores do tema escuro de `src/index.css`, que tem exatamente este fundo:
+  `#003049` (`--background` escuro = `--primary` claro), `#E44444` (`--ember`
+  escuro, o vermelho do "Quiz" na marca), `#FCBF49` (`--gold`) e `#9DB3BE`
+  (`--muted-foreground` escuro). O `--ember` claro (#D62828) não serve aqui:
+  sobre este azul fica abaixo de 3:1 de contraste.
+
+  Mantenha 1200×630 e o texto longe das bordas: alguns aplicativos recortam a
+  prévia num quadrado central, e por isso o mascote fica à direita, onde perdê-lo
+  não leva junto a mensagem.
 -->
 <html><head><meta charset="utf-8"><style>
   * { margin:0; padding:0; box-sizing:border-box; }
-  body { width:1200px; height:630px; background:#0f172a; color:#f8fafc;
+  body { width:1200px; height:630px; background:#003049; color:#F0F2F4;
          font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-         display:flex; flex-direction:column; justify-content:center; padding:0 88px;
          position:relative; overflow:hidden; }
-  .glow { position:absolute; right:-160px; top:-160px; width:620px; height:620px; border-radius:50%;
-          background:radial-gradient(circle, rgba(228,68,68,.22) 0%, rgba(228,68,68,0) 70%); }
-  .mark { display:flex; align-items:center; gap:20px; margin-bottom:44px; }
-  .badge { width:76px; height:76px; border-radius:18px; background:#E44444; color:#ffffff;
-           font-size:34px; font-weight:800; display:flex; align-items:center; justify-content:center; }
+  /* Brilho quente atrás do mascote: dá profundidade sem tirar o fundo da paleta. */
+  .glow { position:absolute; right:-40px; top:40px; width:560px; height:560px; border-radius:50%;
+          background:radial-gradient(circle, rgba(247,127,0,.28) 0%, rgba(247,127,0,0) 68%); }
+  .text { position:absolute; left:80px; top:0; bottom:0; width:720px;
+          display:flex; flex-direction:column; justify-content:center; }
+  .mark { display:flex; align-items:center; gap:20px; margin-bottom:40px; }
+  .mark img { width:76px; height:76px; }
   .word { font-size:40px; font-weight:800; letter-spacing:-.5px; }
   .word span { color:#E44444; }
-  h1 { font-size:66px; line-height:1.1; font-weight:800; letter-spacing:-1.5px; max-width:900px; }
-  p { margin-top:28px; font-size:31px; color:#94a3b8; max-width:860px; line-height:1.35; }
-  .cta { margin-top:44px; font-size:26px; font-weight:600; color:#E44444; }
+  h1 { font-size:66px; line-height:1.1; font-weight:800; letter-spacing:-1.5px; }
+  p { margin-top:26px; font-size:29px; color:#9DB3BE; line-height:1.35; max-width:660px; text-wrap:balance; }
+  .cta { margin-top:40px; font-size:27px; font-weight:700; color:#FCBF49; }
+  .mascot { position:absolute; right:70px; bottom:28px; height:560px; }
 </style></head>
 <body>
   <div class="glow"></div>
-  <div class="mark"><div class="badge">BQ</div><div class="word">Bomber<span>Quiz</span></div></div>
-  <h1>Dedicação que vira resultado</h1>
-  <p>Quiz das matérias do Teste de Avaliação Profissional do CBMGO, com desempenho por matéria.</p>
-  <div class="cta">7 dias grátis para experimentar</div>
+  <div class="text">
+    <div class="mark"><img src="../public/icons/icon-192.png" alt=""><div class="word">Bomber<span>Quiz</span></div></div>
+    <h1>Dedicação que vira resultado</h1>
+    <p>Quiz das matérias do Teste de Avaliação Profissional do CBMGO, com desempenho por matéria.</p>
+    <div class="cta">7 dias grátis para experimentar</div>
+  </div>
+  <img class="mascot" src="../assets-src/mascote/bq_welcome.webp" alt="">
 </body></html>

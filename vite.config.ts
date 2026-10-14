@@ -89,8 +89,6 @@ export default defineConfig(({ mode }) => {
       VitePWA({
         registerType: "autoUpdate",
         includeAssets: [
-          "icons/icon-192.svg",
-          "icons/icon-512.svg",
           "icons/icon-192.png",
           "icons/icon-512.png",
           "icons/icon-512-maskable.png",
@@ -102,8 +100,10 @@ export default defineConfig(({ mode }) => {
           short_name: "BomberQuiz",
           description: "Quiz de preparação para o TAP do CBMGO",
           lang: "pt-BR",
-          theme_color: "#0f172a",
-          background_color: "#0f172a",
+          // `--primary` da paleta — o mesmo azul do fundo dos ícones, para a
+          // tela de abertura do app instalado não piscar em outra cor.
+          theme_color: "#003049",
+          background_color: "#003049",
           display: "standalone",
           // `/inicio`, não `/`, desde que a raiz virou vitrine (2026-08-28).
           // Quem instalou o app e está deslogado abriria numa página de venda

@@ -71,14 +71,12 @@ export const REFUND_TIMING_TEXT: Record<string, string> = {
   card:
     "O crédito aparece assim que o banco emissor do cartão processar o estorno — costuma ser rápido, mas o prazo " +
     "é do banco e pode chegar a 10 dias úteis. Se a fatura atual já fechou, o valor entra na seguinte.",
-  mp_balance: "O valor volta para o seu saldo em Mercado Pago, normalmente em poucos minutos.",
 }
 
 /** Versão curta, para caber ao lado do status na tabela. */
 export const REFUND_TIMING_SHORT: Record<string, string> = {
   pix: "Crédito na conta em poucos minutos.",
   card: "Crédito na fatura em até 10 dias úteis.",
-  mp_balance: "Crédito no saldo em poucos minutos.",
 }
 
 // Códigos retornados por POST /me/checkout e POST /me/payments/:id/refund

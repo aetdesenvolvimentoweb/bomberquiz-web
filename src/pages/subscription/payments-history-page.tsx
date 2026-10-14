@@ -30,7 +30,6 @@ const PAGE_SIZE = 20
 const METHOD_LABELS: Record<string, string> = {
   pix: "PIX",
   card: "Cartão",
-  mp_balance: "Saldo Mercado Pago",
 }
 
 const STATUS_LABELS: Record<string, string> = {

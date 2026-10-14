@@ -43,7 +43,6 @@ const STATUS_LABEL: Record<AdminPayment["status"], string> = {
 const METODO_LABEL: Record<AdminPayment["method"], string> = {
   pix: "PIX",
   card: "Cartão",
-  mp_balance: "Saldo MP",
 };
 
 const CATEGORIA_CORTESIA_LABEL: Record<"parceria" | "demonstracao", string> = {

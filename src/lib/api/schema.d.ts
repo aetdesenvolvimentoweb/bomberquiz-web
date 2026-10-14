@@ -2893,7 +2893,7 @@ export interface operations {
                             }[];
                             by_method: {
                                 /** @enum {string} */
-                                method: "pix" | "mp_balance" | "card";
+                                method: "pix" | "card";
                                 count: number;
                                 total_cents: number;
                             }[];
@@ -2945,7 +2945,7 @@ export interface operations {
                 from?: string;
                 to?: string;
                 status?: "pending" | "paid" | "failed" | "refunded";
-                method?: "pix" | "mp_balance" | "card";
+                method?: "pix" | "card";
                 plan_id?: string;
                 search?: string;
                 page?: number;
@@ -2972,7 +2972,7 @@ export interface operations {
                             plan_slug: string;
                             plan_name: string;
                             /** @enum {string} */
-                            method: "pix" | "mp_balance" | "card";
+                            method: "pix" | "card";
                             /** @enum {string} */
                             status: "pending" | "paid" | "failed" | "refunded";
                             installments: number;
@@ -4643,7 +4643,7 @@ export interface operations {
                     /** @enum {string} */
                     plan_slug: "monthly" | "quarterly" | "semiannual" | "annual";
                     /** @enum {string} */
-                    method: "pix" | "mp_balance" | "card";
+                    method: "pix" | "card";
                     coupon_code: string;
                 };
             };
@@ -4696,7 +4696,7 @@ export interface operations {
                     /** @enum {string} */
                     plan_slug: "monthly" | "quarterly" | "semiannual" | "annual";
                     /** @enum {string} */
-                    method: "pix" | "mp_balance" | "card";
+                    method: "pix" | "card";
                     card_token?: string;
                     payment_method_id?: string;
                     device_id?: string;
@@ -4837,7 +4837,7 @@ export interface operations {
                             id: string;
                             plan_name: string;
                             /** @enum {string} */
-                            method: "pix" | "mp_balance" | "card";
+                            method: "pix" | "card";
                             amount: number;
                             expires_at: string;
                         }[];
@@ -4887,7 +4887,7 @@ export interface operations {
                             id: string;
                             plan_name: string;
                             /** @enum {string} */
-                            method: "pix" | "mp_balance" | "card";
+                            method: "pix" | "card";
                             installments: number;
                             gross_amount: number;
                             discount_amount: number;

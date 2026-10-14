@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { useForgotPassword } from "@/features/auth/api"
+import { ApiError } from "@/lib/api/errors"
 import { forgotPasswordSchema, type ForgotPasswordFormValues } from "@/features/auth/schemas"
 
 export function ForgotPasswordPage() {
@@ -26,8 +27,13 @@ export function ForgotPasswordPage() {
       // e-mail existe. Uma falha real (rede, rate limit) ainda deve ser avisada,
       // em vez de mostrar "e-mail enviado" para algo que não foi de fato tentado.
       setSent(true)
-    } catch {
-      toast.error("Não foi possível enviar o link agora. Tente novamente.")
+    } catch (err) {
+      // AUTH-RF-009 CA-3: 3 pedidos/h por e-mail (e 10/h por IP).
+      toast.error(
+        err instanceof ApiError && err.status === 429
+          ? "Muitas solicitações para este e-mail. Aguarde um pouco antes de tentar de novo."
+          : "Não foi possível enviar o link agora. Tente novamente.",
+      )
     }
   }
 

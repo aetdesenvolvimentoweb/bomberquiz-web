@@ -1288,6 +1288,13 @@ export interface operations {
                 };
                 content?: never;
             };
+            /** @description Rate limit — 3/h por e-mail ou 10/h por IP */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
         };
     };
     resetPassword: {
@@ -1434,6 +1441,13 @@ export interface operations {
         responses: {
             /** @description Resposta genérica (anti-enumeração) */
             200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Rate limit — 3/h por e-mail ou 10/h por IP */
+            429: {
                 headers: {
                     [name: string]: unknown;
                 };

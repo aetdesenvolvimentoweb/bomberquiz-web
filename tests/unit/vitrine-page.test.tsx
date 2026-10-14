@@ -107,6 +107,18 @@ describe("Vitrine em / (visitante sem sessão)", () => {
    * O ponto que faz a fatia 1 e esta conversarem: preço em texto fixo aqui
    * significaria reajustar no painel e a vitrine continuar anunciando o antigo.
    */
+  /**
+   * Pelo papel `img` com nome acessível, não pelo `src`: o que importa é que o
+   * mascote exista para leitor de tela; o arquivo pode ser trocado.
+   */
+  it("mostra o mascote no topo, com texto alternativo", async () => {
+    // Act
+    renderRaiz({ logado: false })
+
+    // Assert
+    expect(await screen.findByRole("img", { name: /mascote do bomberquiz/i })).toBeInTheDocument()
+  })
+
   it("mostra os preços vindos da API, não escritos na página", async () => {
     // Act
     renderRaiz({ logado: false })

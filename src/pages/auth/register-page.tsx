@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { toast } from "sonner"
 import { AuthLayout } from "@/components/auth-layout"
+import { Mascot } from "@/components/mascot"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { PhoneInput } from "@/components/phone-input"
@@ -46,6 +47,7 @@ export function RegisterPage() {
   if (submitted) {
     return (
       <AuthLayout title="Verifique seu e-mail">
+        <Mascot pose="email" alt="Mascote segurando um envelope" className="mx-auto mb-4 w-[120px]" />
         <p className="text-sm text-muted-foreground">
           Enviamos um link de confirmação para o e-mail informado. Clique nele para ativar sua conta.
         </p>

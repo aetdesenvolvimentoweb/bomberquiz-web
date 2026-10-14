@@ -67,6 +67,29 @@ beforeEach(() => {
 })
 
 describe("PerformancePage", () => {
+  it("sem nenhuma resposta, mostra convite em vez de cards zerados", async () => {
+    mockedApiClient.GET.mockImplementation((path: string) => {
+      if (path === "/me/performance") {
+        return Promise.resolve(
+          jsonResponse({
+            ...performanceFixture,
+            overall: { total_answers: 0, correct_answers: 0, accuracy: 0, quizzes_finished: 0 },
+            weakest_subjects: [],
+            strongest_subjects: [],
+          }),
+        )
+      }
+      return Promise.resolve(jsonResponse({ stats_reset_at: null, months: [] }))
+    })
+
+    renderPerformancePage()
+
+    expect(await screen.findByText("Ainda não há o que medir")).toBeInTheDocument()
+    expect(screen.getByRole("img", { name: /mascote/i })).toBeInTheDocument()
+    expect(screen.getByRole("link", { name: "Iniciar quiz" })).toHaveAttribute("href", "/quiz/iniciar")
+    expect(screen.queryByText("Perguntas respondidas")).not.toBeInTheDocument()
+  })
+
   it("mostra os cards de overall e as listas de pontos fortes/fracos", async () => {
     renderPerformancePage()
 

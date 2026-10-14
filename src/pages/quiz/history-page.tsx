@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Spinner } from "@/components/ui/spinner"
 import { Button } from "@/components/ui/button"
+import { Mascot } from "@/components/mascot"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Pagination, PaginationContent, PaginationItem, PaginationNext, PaginationPrevious } from "@/components/ui/pagination"
 import { useQuizHistory, type QuizHistoryFilters } from "@/features/quiz/performance-api"
@@ -45,6 +46,12 @@ export function HistoryPage() {
   })
 
   const totalPages = data ? Math.max(1, Math.ceil(data.total / PAGE_SIZE)) : 1
+
+  // Histórico vazio SEM filtro é "nunca fez um quiz" — merece convite, não uma
+  // linha de tabela. Com filtro, vazio é só "nada nesse recorte", e a tabela
+  // com a linha de aviso continua sendo a resposta certa.
+  const hasFilters = mode !== "all" || status !== "all" || startedFrom !== "" || startedTo !== ""
+  const neverPlayed = data !== undefined && data.total === 0 && !hasFilters
 
   return (
     <div className="mx-auto max-w-4xl space-y-6 p-6">
@@ -110,7 +117,20 @@ export function HistoryPage() {
 
       {isError && <p className="text-sm text-destructive">Não foi possível carregar o histórico.</p>}
 
-      {data && (
+      {neverPlayed && (
+        <div className="flex flex-col items-center gap-4 py-8 text-center">
+          <Mascot pose="empty" alt="Mascote sentado, lendo um livro" className="w-[140px] sm:w-[160px]" />
+          <div>
+            <p className="font-medium">Seu primeiro quiz te espera</p>
+            <p className="mt-1 text-sm text-muted-foreground">Os quizzes que você fizer aparecem aqui, com o resultado de cada um.</p>
+          </div>
+          <Button asChild>
+            <Link to="/quiz/iniciar">Iniciar quiz</Link>
+          </Button>
+        </div>
+      )}
+
+      {data && !neverPlayed && (
         <>
           <Table>
             <TableHeader>

@@ -1,4 +1,5 @@
 import { Brand } from "@/components/brand";
+import { Mascot, type MascotPose } from "@/components/mascot";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
@@ -44,22 +45,39 @@ export function VitrinePage() {
       </header>
 
       <main className="mx-auto max-w-5xl space-y-16 px-4 pb-16">
-        <section className="pt-8 text-center sm:pt-16">
-          <h1 className="text-balance text-3xl font-bold sm:text-5xl">
-            Preparação inteligente para o Teste de Avaliação Profissional
-          </h1>
-          <p className="mx-auto mt-4 max-w-2xl text-balance text-muted-foreground sm:text-lg">
-            Você pratica, identifica o que precisa reforçar e chega mais
-            confiante para a prova.
-          </p>
+        {/* Herói em duas colunas a partir de `sm`: texto à esquerda, mascote à
+            direita — a pose dele (polegar para cima, livro na mão) se volta para
+            o texto. No mobile o mascote vem antes do título, menor, para o CTA
+            continuar acima da dobra.
 
-          <div className="mt-8 flex flex-col items-center gap-3">
-            <Button asChild size="lg" className="w-full sm:w-auto">
-              <Link to="/cadastro">Experimente grátis por 7 dias</Link>
-            </Button>
-            <span className="text-sm text-muted-foreground">
-              Sem cartão para começar.
-            </span>
+            O mascote mede 433px de largura no arquivo; 200px no desktop é o
+            máximo que ainda fica nítido em tela retina (2×). Se o arquivo
+            ganhar resolução, dá para subir `sm:w-[200px]`. */}
+        <section className="flex flex-col items-center gap-6 pt-8 text-center sm:flex-row-reverse sm:justify-between sm:gap-10 sm:pt-16 sm:text-left">
+          <Mascot
+            pose="welcome"
+            alt="Mascote do BomberQuiz: bombeiro segurando um livro e fazendo sinal de positivo"
+            priority
+            className="w-[140px] sm:w-[200px]"
+          />
+
+          <div>
+            <h1 className="text-balance text-3xl font-bold sm:text-5xl">
+              Preparação inteligente para o Teste de Avaliação Profissional
+            </h1>
+            <p className="mx-auto mt-4 max-w-2xl text-balance text-muted-foreground sm:mx-0 sm:text-lg">
+              Você pratica, identifica o que precisa reforçar e chega mais
+              confiante para a prova.
+            </p>
+
+            <div className="mt-8 flex flex-col items-center gap-3 sm:items-start">
+              <Button asChild size="lg" className="w-full sm:w-auto">
+                <Link to="/cadastro">Experimente grátis por 7 dias</Link>
+              </Button>
+              <span className="text-sm text-muted-foreground">
+                Sem cartão para começar.
+              </span>
+            </div>
           </div>
         </section>
 
@@ -67,16 +85,19 @@ export function VitrinePage() {
           <div className="grid gap-6 sm:grid-cols-3">
             <Passo
               numero="1"
+              pose="choice"
               titulo="Escolha"
               texto="Defina o que quer treinar: selecione matérias específicas ou deixe o app montar um desafio completo com todos os eixos do TAP."
             />
             <Passo
               numero="2"
+              pose="focus"
               titulo="Enfrente"
               texto="Responda às questões e confira o resultado. Cada acerto reforça sua confiança, e os erros viram aprendizado imediatamente."
             />
             <Passo
               numero="3"
+              pose="evolution"
               titulo="Evolua"
               texto="Acompanhe seu desempenho por matéria e descubra onde já está sólido e onde precisa investir mais tempo para chegar pronto ao TAP."
             />
@@ -160,15 +181,21 @@ export function VitrinePage() {
 
 function Passo({
   numero,
+  pose,
   titulo,
   texto,
 }: {
   numero: string;
+  pose: MascotPose;
   titulo: string;
   texto: string;
 }) {
   return (
     <div className="rounded-lg border p-5">
+      {/* `alt=""`: a ilustração repete o título do passo, que vem logo abaixo
+          — descrevê-la só faria o leitor de tela dizer a mesma coisa duas
+          vezes. */}
+      <Mascot pose={pose} alt="" className="mx-auto mb-4 w-[120px]" />
       {/* Número e título na mesma linha: empilhados, o círculo ocupava uma
           faixa inteira de altura só para se anunciar. `shrink-0` no círculo
           porque um título que quebre em duas linhas espremeria o número até

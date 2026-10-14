@@ -66,6 +66,23 @@ beforeEach(() => {
 })
 
 describe("ResultQuizPage", () => {
+  // Pelo nome acessível da imagem: é ele que distingue as três reações, e é o
+  // que um leitor de tela anuncia.
+  it.each([
+    [0.85, /comemorando/i],
+    [0.7, /comemorando/i],
+    [0.55, /sinal de positivo/i],
+    [0.4, /sinal de positivo/i],
+    [0.1, /encorajando/i],
+    [0, /encorajando/i],
+  ])("com aproveitamento %s, o mascote reage de acordo", async (accuracy, name) => {
+    mockedApiClient.GET.mockResolvedValue(jsonResponse(buildResult({ accuracy })))
+
+    renderResultQuizPage()
+
+    expect(await screen.findByRole("img", { name })).toBeInTheDocument()
+  })
+
   it("mostra o cabeçalho e a tabela de desempenho por matéria", async () => {
     mockedApiClient.GET.mockResolvedValue(jsonResponse(buildResult()))
 

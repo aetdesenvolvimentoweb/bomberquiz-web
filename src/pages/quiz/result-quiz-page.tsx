@@ -1,6 +1,7 @@
 import { useLocation, useParams, Link } from "react-router-dom"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Mascot, type MascotPose } from "@/components/mascot"
 import { Spinner } from "@/components/ui/spinner"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { useQuizResult, type QuizResultResponse } from "@/features/quiz/quiz-api"
@@ -21,6 +22,23 @@ const STATUS_BADGE_VARIANT: Record<QuizResultResponse["status"], "success" | "de
   finished: "success",
   expired: "destructive",
   abandoned: "secondary",
+}
+
+/**
+ * Reação do mascote ao aproveitamento. Três faixas e nenhuma delas triste: para
+ * quem estuda para uma prova, a mensagem certa num resultado ruim é "dá para
+ * melhorar", nunca "você foi mal".
+ */
+const FEEDBACK: { min: number; pose: MascotPose; alt: string; message: string }[] = [
+  { min: 0.7, pose: "happy", alt: "Mascote comemorando com os braços para cima", message: "Mandou bem! Continue nesse ritmo." },
+  { min: 0.4, pose: "welcome", alt: "Mascote fazendo sinal de positivo", message: "Bom caminho. Revise os erros abaixo e siga em frente." },
+  { min: 0, pose: "encouraging", alt: "Mascote de punho erguido, encorajando", message: "Cada erro aqui é um acerto na prova. Revise e tente de novo." },
+]
+
+function feedbackFor(accuracy: number) {
+  // A lista está em ordem decrescente de `min` e a última faixa começa em 0,
+  // então sempre há uma — o `!` não esconde caso nenhum.
+  return FEEDBACK.find((f) => accuracy >= f.min)!
 }
 
 function formatDuration(seconds: number | null): string {
@@ -56,11 +74,18 @@ export function ResultQuizPage() {
     )
   }
 
+  const feedback = feedbackFor(result.accuracy)
+
   return (
     <div className="mx-auto max-w-2xl px-4 py-8">
       <div className="flex items-center justify-between gap-4">
         <h1 className="text-2xl font-semibold">Resultado</h1>
         <Badge variant={STATUS_BADGE_VARIANT[result.status]}>{STATUS_LABELS[result.status]}</Badge>
+      </div>
+
+      <div className="mt-4 flex items-center gap-4 rounded-lg bg-muted/50 p-4">
+        <Mascot pose={feedback.pose} alt={feedback.alt} className="w-[72px] sm:w-[96px]" />
+        <p className="font-medium">{feedback.message}</p>
       </div>
 
       <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-4">

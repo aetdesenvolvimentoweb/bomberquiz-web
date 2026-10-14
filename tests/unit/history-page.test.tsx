@@ -55,12 +55,15 @@ describe("HistoryPage", () => {
     expect(screen.getByRole("link", { name: "Ver resultado" })).toHaveAttribute("href", "/quiz/quiz-1/resultado")
   })
 
-  it("mostra estado vazio quando não há quizzes", async () => {
+  it("sem quiz nenhum e sem filtro, convida para o primeiro quiz em vez de mostrar tabela vazia", async () => {
     mockedApiClient.GET.mockResolvedValue(jsonResponse({ items: [], page: 1, page_size: 20, total: 0 }))
 
     renderHistoryPage()
 
-    expect(await screen.findByText("Nenhum quiz encontrado.")).toBeInTheDocument()
+    expect(await screen.findByText("Seu primeiro quiz te espera")).toBeInTheDocument()
+    expect(screen.getByRole("img", { name: /mascote/i })).toBeInTheDocument()
+    expect(screen.getByRole("link", { name: "Iniciar quiz" })).toHaveAttribute("href", "/quiz/iniciar")
+    expect(screen.queryByRole("table")).not.toBeInTheDocument()
   })
 
   it("o filtro de status dispara uma nova busca com o valor certo", async () => {
@@ -69,7 +72,7 @@ describe("HistoryPage", () => {
     renderHistoryPage()
     const user = userEvent.setup()
 
-    await screen.findByText("Nenhum quiz encontrado.")
+    await screen.findByText("Seu primeiro quiz te espera")
     await user.selectOptions(screen.getByDisplayValue("Todos os status"), "abandoned")
 
     await waitFor(() =>
@@ -78,5 +81,9 @@ describe("HistoryPage", () => {
         expect.objectContaining({ params: { query: expect.objectContaining({ status: "abandoned" }) } }),
       ),
     )
+    // Vazio COM filtro é "nada nesse recorte", não "nunca jogou": volta a tabela
+    // com a linha de aviso, e o convite some.
+    expect(await screen.findByText("Nenhum quiz encontrado.")).toBeInTheDocument()
+    expect(screen.queryByText("Seu primeiro quiz te espera")).not.toBeInTheDocument()
   })
 })

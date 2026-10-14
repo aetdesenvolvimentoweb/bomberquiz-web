@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { toast } from "sonner"
 import { AuthLayout } from "@/components/auth-layout"
+import { Mascot } from "@/components/mascot"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
@@ -38,6 +39,7 @@ export function ResendVerificationPage() {
   if (sent) {
     return (
       <AuthLayout title="Verifique seu e-mail">
+        <Mascot pose="email" alt="Mascote segurando um envelope" className="mx-auto mb-4 w-[120px]" />
         <p className="text-sm text-muted-foreground">
           Se o e-mail estiver cadastrado e ainda não verificado, você receberá um novo link.
         </p>

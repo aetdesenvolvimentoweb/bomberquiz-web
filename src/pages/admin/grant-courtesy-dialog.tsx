@@ -29,11 +29,13 @@ function formatDate(iso: string): string {
 export interface GrantCourtesyDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+  /** Aberto pelo detalhe de usuário (PROF-RF-014): já vem com o e-mail dele. */
+  initialEmail?: string
 }
 
 // SUB-RF-008 — o admin acha o beneficiário pelo e-mail exato (a mesma busca de
 // /painel/usuarios) e confirma vendo nome e situação da conta antes de conceder.
-export function GrantCourtesyDialog({ open, onOpenChange }: GrantCourtesyDialogProps) {
+export function GrantCourtesyDialog({ open, onOpenChange, initialEmail = "" }: GrantCourtesyDialogProps) {
   const [email, setEmail] = useState("")
   const [days, setDays] = useState("30")
   const [category, setCategory] = useState<CourtesyCategory>("parceria")
@@ -42,12 +44,12 @@ export function GrantCourtesyDialog({ open, onOpenChange }: GrantCourtesyDialogP
 
   useEffect(() => {
     if (open) {
-      setEmail("")
+      setEmail(initialEmail)
       setDays("30")
       setCategory("parceria")
       setNotes("")
     }
-  }, [open])
+  }, [open, initialEmail])
 
   const trimmedEmail = email.trim()
   const lookupEnabled = open && trimmedEmail.includes("@")

@@ -21,6 +21,8 @@ export interface AdminCourtesiesFilters {
 const ADMIN_COURTESIES_QUERY_KEY = ["courtesies", "admin-courtesies"] as const
 // Mesmo prefixo de financial-api.ts: conceder/revogar muda os blocos de cortesia do painel.
 const FINANCIAL_OVERVIEW_QUERY_KEY = ["subscription", "financial-overview"] as const
+// Prefixo de users-admin-api.ts: o detalhe de usuário (PROF-RF-014) mostra as cortesias.
+const ADMIN_USERS_QUERY_KEY = ["users", "admin-users"] as const
 
 // SUB-RF-009: histórico de cortesias + saldo do limite mensal de quem consulta.
 export function useAdminCourtesies(filters: AdminCourtesiesFilters) {
@@ -49,6 +51,7 @@ function useInvalidateCourtesies() {
     Promise.all([
       queryClient.invalidateQueries({ queryKey: ADMIN_COURTESIES_QUERY_KEY }),
       queryClient.invalidateQueries({ queryKey: FINANCIAL_OVERVIEW_QUERY_KEY }),
+      queryClient.invalidateQueries({ queryKey: ADMIN_USERS_QUERY_KEY }),
     ])
 }
 

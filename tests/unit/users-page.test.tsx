@@ -71,6 +71,13 @@ describe("UsersPage (PROF-RF-011 a 013)", () => {
     expect(screen.getAllByRole("button", { name: "Revogar parceiro" })).toHaveLength(1)
   })
 
+  it("o nome leva ao detalhe do usuário (PROF-RF-014)", async () => {
+    renderPage([buildUser()])
+
+    const link = await screen.findByRole("link", { name: "Carla Lima" })
+    expect(link).toHaveAttribute("href", "/painel/usuarios/user-1")
+  })
+
   it("promove após confirmar no diálogo", async () => {
     renderPage([buildUser()])
     mockedApiClient.PATCH.mockResolvedValue(jsonResponse(buildUser({ role: "partner" })))

@@ -555,6 +555,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/users/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Detalhe de usuário com resumo de assinaturas e cortesias (PROF-RF-014) */
+        get: operations["getAdminUserDetail"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/users/{id}/role": {
         parameters: {
             query?: never;
@@ -3024,6 +3041,81 @@ export interface operations {
             };
             /** @description Acesso restrito a administradores */
             403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    getAdminUserDetail: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Detalhe do usuário */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        id: string;
+                        name: string;
+                        email: string;
+                        /** @enum {string} */
+                        role: "client" | "partner" | "admin";
+                        /** @enum {string} */
+                        status: "active" | "inactive" | "deleted";
+                        created_at: string;
+                        last_login_at: string | null;
+                        contract: {
+                            access: {
+                                /** @enum {string} */
+                                status: "active" | "inactive";
+                                active_until: string | null;
+                                /** @enum {string|null} */
+                                source: "trial" | "paid" | "courtesy" | null;
+                            };
+                            recent_subscriptions: {
+                                id: string;
+                                /** @enum {string} */
+                                source: "trial" | "paid" | "courtesy";
+                                plan_name: string | null;
+                                /** @enum {string} */
+                                status: "active" | "expired" | "revoked" | "pending_payment";
+                                start_at: string;
+                                end_at: string;
+                                /** @enum {string|null} */
+                                courtesy_category: "parceria" | "demonstracao" | null;
+                            }[];
+                            courtesies_received_this_year: number;
+                        };
+                    };
+                };
+            };
+            /** @description Não autenticado */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Acesso restrito a administradores */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Usuário não encontrado ou excluído */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };

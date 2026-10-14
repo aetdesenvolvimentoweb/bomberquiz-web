@@ -7,6 +7,9 @@ export type AdminUser =
   paths["/admin/users"]["get"]["responses"][200]["content"]["application/json"]["items"][number]
 export type UserRoleFilter = AdminUser["role"] | "all"
 export type UserStatusFilter = AdminUser["status"] | "all"
+export type AdminUserDetail =
+  paths["/admin/users/{id}"]["get"]["responses"][200]["content"]["application/json"]
+export type RecentSubscription = AdminUserDetail["contract"]["recent_subscriptions"][number]
 
 export interface AdminUsersFilters {
   email?: string
@@ -39,6 +42,16 @@ export function useAdminUsers(filters: AdminUsersFilters, options: { enabled?: b
           },
         }),
       ),
+  })
+}
+
+// PROF-RF-014: detalhe com o resumo de assinaturas e cortesias. A chave fica sob
+// o prefixo da listagem para que mudar o papel (e conceder/revogar cortesia,
+// em courtesies-admin-api.ts) atualize as duas telas.
+export function useAdminUserDetail(id: string) {
+  return useQuery({
+    queryKey: [...ADMIN_USERS_QUERY_KEY, "detail", id],
+    queryFn: () => unwrap(apiClient.GET("/admin/users/{id}", { params: { path: { id } } })),
   })
 }
 

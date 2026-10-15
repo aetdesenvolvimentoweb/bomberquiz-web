@@ -1,4 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { CONSENT_VERSION } from "@/content/legal/consent-version"
 import { toast } from "sonner"
 import { apiClient } from "@/lib/api/client"
 import { ApiError, unwrap } from "@/lib/api/errors"
@@ -17,7 +18,7 @@ export function useRegister() {
             dob: values.dob,
             sex: values.sex,
             password: values.password,
-            consent_version: 1,
+            consent_version: CONSENT_VERSION,
           },
         }),
       ),

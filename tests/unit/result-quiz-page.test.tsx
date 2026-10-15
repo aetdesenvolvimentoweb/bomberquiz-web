@@ -42,6 +42,7 @@ function buildResult(overrides: Partial<QuizResultResponse> = {}): QuizResultRes
         is_correct: false,
         explanation: "Porque a opção A está correta segundo a norma.",
         source_reference: "NT-01",
+        reportable: true,
       },
     ],
     ...overrides,
@@ -101,6 +102,24 @@ describe("ResultQuizPage", () => {
     expect(screen.getByText("Porque a opção A está correta segundo a norma.")).toBeInTheDocument()
     expect(screen.getByText("(gabarito)")).toBeInTheDocument()
     expect(screen.getByText("(sua resposta)")).toBeInTheDocument()
+  })
+
+  // QUIZ-RF-011 CA-12: pergunta que saiu do banco (edital, arquivamento) não é contestável.
+  it("oferece 'Reportar problema' só nas questões que ainda estão no banco", async () => {
+    const [question] = buildResult().questions
+    mockedApiClient.GET.mockResolvedValue(
+      jsonResponse(
+        buildResult({
+          total_questions: 2,
+          questions: [question!, { ...question!, position: 2, question_id: "q2", statement: "Pergunta que saiu do edital", reportable: false }],
+        }),
+      ),
+    )
+
+    renderResultQuizPage()
+
+    expect(await screen.findByText("Pergunta que saiu do edital")).toBeInTheDocument()
+    expect(screen.getAllByRole("button", { name: "Reportar problema" })).toHaveLength(1)
   })
 
   it("distingue não respondida por abandono (não penaliza) de não respondida contada como erro", async () => {

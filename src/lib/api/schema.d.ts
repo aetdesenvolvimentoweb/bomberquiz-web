@@ -4511,6 +4511,7 @@ export interface operations {
                             is_correct: boolean | null;
                             explanation: string;
                             source_reference: string | null;
+                            reportable: boolean;
                         }[];
                     };
                 };
@@ -4580,6 +4581,7 @@ export interface operations {
                             is_correct: boolean | null;
                             explanation: string;
                             source_reference: string | null;
+                            reportable: boolean;
                         }[];
                     };
                 };

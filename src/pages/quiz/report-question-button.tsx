@@ -45,7 +45,7 @@ const REASONS = Object.entries(QUESTION_REPORT_REASON_LABELS) as [QuestionReport
  */
 export function ReportQuestionButton({ quizId, position }: { quizId: string; position: number }) {
   const [open, setOpen] = useState(false)
-  const [reported, setReported] = useState(false)
+  const [state, setState] = useState<"idle" | "reported" | "unavailable">("idle")
   const reportMutation = useReportQuestion()
 
   const form = useForm<ReportQuestionFormValues>({
@@ -57,12 +57,19 @@ export function ReportQuestionButton({ quizId, position }: { quizId: string; pos
     try {
       await reportMutation.mutateAsync({ quizId, position, ...values })
       toast.success("Obrigado! Vamos analisar e responder por e-mail.")
-      setReported(true)
+      setState("reported")
       setOpen(false)
     } catch (err) {
       if (err instanceof ApiError && err.code === "question_already_reported") {
         toast.info(err.message)
-        setReported(true)
+        setState("reported")
+        setOpen(false)
+        return
+      }
+      // A pergunta saiu do banco entre o sorteio e agora (CA-12).
+      if (err instanceof ApiError && err.code === "question_not_in_circulation") {
+        toast.info(err.message)
+        setState("unavailable")
         setOpen(false)
         return
       }
@@ -71,8 +78,11 @@ export function ReportQuestionButton({ quizId, position }: { quizId: string; pos
     }
   }
 
-  if (reported) {
+  if (state === "reported") {
     return <p className="text-xs text-muted-foreground">Problema reportado. Obrigado!</p>
+  }
+  if (state === "unavailable") {
+    return <p className="text-xs text-muted-foreground">Questão fora do banco atual</p>
   }
 
   return (

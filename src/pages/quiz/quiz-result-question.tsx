@@ -63,10 +63,13 @@ export function QuizResultQuestion({ quizId, question, index }: { quizId: string
         {question.source_reference && <p className="mt-1 text-xs text-muted-foreground">{question.source_reference}</p>}
       </div>
 
-      {/* Na revisão é que o cliente vê gabarito e explicação no modo "no final" — é aqui que ele os contesta. */}
-      <div className="mt-2 flex justify-end">
-        <ReportQuestionButton quizId={quizId} position={question.position} />
-      </div>
+      {/* Na revisão é que o cliente vê gabarito e explicação no modo "no final" — é aqui que ele os contesta.
+          Pergunta que saiu do banco (edital mudou, arquivada) não é contestável (QUIZ-RF-011 CA-12). */}
+      {question.reportable && (
+        <div className="mt-2 flex justify-end">
+          <ReportQuestionButton quizId={quizId} position={question.position} />
+        </div>
+      )}
     </div>
   )
 }

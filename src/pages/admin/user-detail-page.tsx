@@ -138,6 +138,24 @@ export function UserDetailPage() {
             </Link>
           </CardContent>
         </Card>
+        {/* QUIZ-RF-011 CA-10: medidor do parceiro — perguntas dele corrigidas
+            depois de uma contestação procedente. */}
+        {user.content_reports && (
+          <Card>
+            <CardHeader>
+              <CardDescription>Perguntas corrigidas após contestação</CardDescription>
+              <CardTitle className="text-lg">{user.content_reports.questions_corrected_after_report}</CardTitle>
+            </CardHeader>
+            <CardContent className="text-sm text-muted-foreground">
+              {user.content_reports.questions_with_open_reports === 0
+                ? "Nenhuma em análise agora."
+                : `${user.content_reports.questions_with_open_reports} em análise agora.`}{" "}
+              <Link to="/painel/contestacoes" className="hover:underline">
+                Ver contestações
+              </Link>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       <div className="space-y-2">

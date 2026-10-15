@@ -63,7 +63,7 @@ describe("PanelLayout", () => {
     expect(await screen.findByRole("button", { name: /Ana/ })).toBeInTheDocument()
   })
 
-  it("agrupa Eixos, Matérias, Perguntas e Revisão no menu Quiz", async () => {
+  it("agrupa Eixos, Matérias, Perguntas, Revisão e Contestações no menu Quiz", async () => {
     renderPanelLayout()
     const user = userEvent.setup()
 
@@ -72,7 +72,31 @@ describe("PanelLayout", () => {
 
     const menu = await screen.findByRole("menu")
     const labels = within(menu).getAllByRole("menuitem").map((item) => item.textContent)
-    expect(labels).toEqual(["Eixos", "Matérias", "Perguntas", "Revisão"])
+    expect(labels).toEqual(["Eixos", "Matérias", "Perguntas", "Revisão", "Contestações"])
+  })
+
+  it("mostra no menu quantas perguntas têm contestação aberta", async () => {
+    mockedApiClient.GET.mockImplementation((path: string) =>
+      Promise.resolve({
+        data:
+          path === "/admin/question-reports"
+            ? { items: [], page: 1, page_size: 1, total: 3 }
+            : { user: adminUser, requires_consent_renewal: false },
+        error: undefined,
+        response: new Response(null, { status: 200 }),
+      }),
+    )
+    renderPanelLayout()
+    const user = userEvent.setup()
+
+    await screen.findByText("Conteúdo de Eixos")
+    await user.click(screen.getByRole("button", { name: "Quiz" }))
+
+    const menu = await screen.findByRole("menu")
+    expect(await within(menu).findByRole("menuitem", { name: "Contestações 3" })).toHaveAttribute(
+      "href",
+      "/painel/contestacoes",
+    )
   })
 
   it("agrupa Movimentações, Planos, Cortesias e Cupons no menu Financeiro", async () => {

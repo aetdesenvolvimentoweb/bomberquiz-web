@@ -71,8 +71,15 @@ export function PartnerQuestionDetailPage() {
             <Badge variant={question.status === "published" ? "success" : "secondary"}>
               {STATUS_LABELS[question.status] ?? question.status}
             </Badge>
+            {question.under_admin_review && <Badge variant="outline">Em análise</Badge>}
             <span className="text-sm text-muted-foreground">{question.subject_name}</span>
           </div>
+          {/* QUIZ-RF-011 CA-4: o parceiro sabe que há algo em análise, sem quem nem o quê. */}
+          {question.under_admin_review && (
+            <p className="text-sm text-muted-foreground">
+              Um cliente apontou um possível problema nesta pergunta, e ela está sendo analisada pela administração.
+            </p>
+          )}
         </div>
       )}
 

@@ -22,13 +22,28 @@ import { useLogout } from "@/features/auth/api"
 import { getInitials } from "@/lib/initials"
 import { cn } from "@/lib/utils"
 
-export type NavItem = { to: string; label: string }
+// `badge`: contador ao lado do rótulo (ex.: contestações abertas no painel);
+// 0 ou ausente não mostra nada.
+export type NavItem = { to: string; label: string; badge?: number }
 // Grupo vira dropdown no desktop e seção com título no drawer mobile.
 export type NavGroup = { label: string; items: NavItem[] }
 export type NavEntry = NavItem | NavGroup
 
 function isNavGroup(entry: NavEntry): entry is NavGroup {
   return "items" in entry
+}
+
+function NavLabel({ item }: { item: NavItem }) {
+  return (
+    <>
+      {item.label}
+      {item.badge ? (
+        <span className="ml-1.5 rounded-full bg-destructive px-1.5 py-0.5 text-xs font-medium leading-none text-destructive-foreground">
+          {item.badge}
+        </span>
+      ) : null}
+    </>
+  )
 }
 
 function navLinkClassName({ isActive }: { isActive: boolean }): string {
@@ -66,19 +81,25 @@ export function NavShell({ navItems }: { navItems: NavEntry[] }) {
                       )}
                     >
                       {entry.label}
+                      {/* O número fica no item, dentro do menu; no grupo fechado, só o aviso de que há algo. */}
+                      {entry.items.some((item) => item.badge) && (
+                        <span aria-hidden className="h-2 w-2 rounded-full bg-destructive" />
+                      )}
                       <ChevronDown className="h-4 w-4" />
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="start">
                       {entry.items.map((item) => (
                         <DropdownMenuItem key={item.to} asChild>
-                          <Link to={item.to}>{item.label}</Link>
+                          <Link to={item.to}>
+                            <NavLabel item={item} />
+                          </Link>
                         </DropdownMenuItem>
                       ))}
                     </DropdownMenuContent>
                   </DropdownMenu>
                 ) : (
                   <NavLink key={entry.to} to={entry.to} className={navLinkClassName}>
-                    {entry.label}
+                    <NavLabel item={entry} />
                   </NavLink>
                 ),
               )}
@@ -233,7 +254,7 @@ function MobileNavLink({ item, onNavigate }: { item: NavItem; onNavigate: () => 
         )
       }
     >
-      {item.label}
+      <NavLabel item={item} />
     </NavLink>
   )
 }

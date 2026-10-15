@@ -72,6 +72,15 @@ export function PartnerDashboardPage() {
               <p className="text-2xl font-semibold">{formatPct(data.engagement.avg_accuracy)}</p>
               <p className="text-xs text-muted-foreground">Acurácia média</p>
             </div>
+            {/* QUIZ-RF-011 CA-10: perguntas distintas, não contestações. */}
+            <div className="rounded-lg border p-3 text-center">
+              <p className="text-2xl font-semibold">{data.reports.questions_with_open_reports}</p>
+              <p className="text-xs text-muted-foreground">Em análise por contestação</p>
+            </div>
+            <div className="rounded-lg border p-3 text-center">
+              <p className="text-2xl font-semibold">{data.reports.questions_corrected_after_report}</p>
+              <p className="text-xs text-muted-foreground">Corrigidas após contestação</p>
+            </div>
           </div>
 
           <div>

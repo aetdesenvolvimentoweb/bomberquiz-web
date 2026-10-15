@@ -1,5 +1,6 @@
 import { Badge } from "@/components/ui/badge"
 import type { QuizResultResponse } from "@/features/quiz/quiz-api"
+import { ReportQuestionButton } from "./report-question-button"
 
 type ResultQuestion = QuizResultResponse["questions"][number]
 
@@ -19,7 +20,7 @@ function statusBadge(question: ResultQuestion) {
     : { label: "Incorreta", variant: "destructive" as const }
 }
 
-export function QuizResultQuestion({ question, index }: { question: ResultQuestion; index: number }) {
+export function QuizResultQuestion({ quizId, question, index }: { quizId: string; question: ResultQuestion; index: number }) {
   const badge = statusBadge(question)
 
   return (
@@ -60,6 +61,11 @@ export function QuizResultQuestion({ question, index }: { question: ResultQuesti
       <div className="mt-3 rounded-md bg-muted p-3 text-sm">
         <p>{question.explanation}</p>
         {question.source_reference && <p className="mt-1 text-xs text-muted-foreground">{question.source_reference}</p>}
+      </div>
+
+      {/* Na revisão é que o cliente vê gabarito e explicação no modo "no final" — é aqui que ele os contesta. */}
+      <div className="mt-2 flex justify-end">
+        <ReportQuestionButton quizId={quizId} position={question.position} />
       </div>
     </div>
   )

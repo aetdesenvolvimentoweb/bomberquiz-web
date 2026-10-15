@@ -24,6 +24,7 @@ import { UsersPage } from "@/pages/admin/users-page"
 import { UserDetailPage } from "@/pages/admin/user-detail-page"
 import { CourtesiesPage } from "@/pages/admin/courtesies-page"
 import { CouponsPage } from "@/pages/admin/coupons-page"
+import { QuestionReportsPage } from "@/pages/admin/question-reports-page"
 import { StartQuizPage } from "@/pages/quiz/start-quiz-page"
 import { AnswerQuizPage } from "@/pages/quiz/answer-quiz-page"
 import { ResultQuizPage } from "@/pages/quiz/result-quiz-page"
@@ -103,6 +104,7 @@ export const router = createBrowserRouter([
                       { path: "/painel/usuarios/:id", element: <UserDetailPage /> },
                       { path: "/painel/cortesias", element: <CourtesiesPage /> },
                       { path: "/painel/cupons", element: <CouponsPage /> },
+                      { path: "/painel/contestacoes", element: <QuestionReportsPage /> },
                     ],
                   },
                 ],

@@ -238,6 +238,8 @@ export function PartnerQuestionsPage() {
                       {question.status === "draft" && question.rejection_reason && (
                         <Badge variant="destructive">Rejeitada</Badge>
                       )}
+                      {/* QUIZ-RF-011 CA-4: contestação de cliente aberta. */}
+                      {question.under_admin_review && <Badge variant="outline">Em análise</Badge>}
                     </TableCell>
                     <TableCell>
                       {question.status === "published" ? (

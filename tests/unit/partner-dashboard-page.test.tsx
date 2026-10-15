@@ -27,6 +27,7 @@ const dashboard = {
     { id: "q2", statement_preview: "Pergunta rejeitada recente", rejection_reason: "Faltou fonte oficial.", rejected_at: "2026-07-30T00:00:00.000Z" },
   ],
   unread_review_events: 3,
+  reports: { questions_with_open_reports: 1, questions_corrected_after_report: 2 },
 }
 
 function renderDashboardPage() {
@@ -86,6 +87,7 @@ describe("PartnerDashboardPage (PART-RF-008)", () => {
         last_published: [],
         last_rejected: [],
         unread_review_events: 0,
+        reports: { questions_with_open_reports: 0, questions_corrected_after_report: 0 },
       }),
     )
 

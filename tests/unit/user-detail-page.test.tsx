@@ -58,6 +58,7 @@ function buildDetail(overrides: Partial<AdminUserDetail> = {}): AdminUserDetail 
       ],
       courtesies_received_this_year: 2,
     },
+    content_reports: null,
     ...overrides,
   }
 }

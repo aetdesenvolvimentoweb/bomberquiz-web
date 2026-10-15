@@ -659,6 +659,40 @@ export interface paths {
         patch: operations["updateCoupon"];
         trace?: never;
     };
+    "/admin/question-reports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Perguntas contestadas, com as contestações */
+        get: operations["listReportedQuestions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/question-reports/{question_id}/resolve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Resolver as contestações abertas de uma pergunta */
+        post: operations["resolveQuestionReports"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/me/questions": {
         parameters: {
             query?: never;
@@ -809,6 +843,23 @@ export interface paths {
         get: operations["getQuizResult"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/quizzes/{id}/questions/{position}/report": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Contestar uma questão do quiz */
+        post: operations["reportQuizQuestion"];
         delete?: never;
         options?: never;
         head?: never;
@@ -3111,6 +3162,10 @@ export interface operations {
                             }[];
                             courtesies_received_this_year: number;
                         };
+                        content_reports: {
+                            questions_with_open_reports: number;
+                            questions_corrected_after_report: number;
+                        } | null;
                     };
                 };
             };
@@ -3619,6 +3674,153 @@ export interface operations {
             };
         };
     };
+    listReportedQuestions: {
+        parameters: {
+            query?: {
+                page?: number;
+                page_size?: number;
+                status?: "open" | "resolved";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Lista paginada por pergunta */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: {
+                            question: {
+                                statement: string;
+                                alternatives: string[];
+                                correct_index: number;
+                                explanation: string;
+                                source_reference: string | null;
+                                id: string;
+                                image_url: string | null;
+                                status: string;
+                                subject_name: string;
+                                author: {
+                                    id: string;
+                                    name: string;
+                                    role: string;
+                                };
+                            };
+                            reports: {
+                                id: string;
+                                /** @enum {string} */
+                                reason: "statement" | "answer_key" | "explanation" | "other";
+                                message: string;
+                                /** @enum {string} */
+                                status: "open" | "resolved";
+                                /** @enum {string|null} */
+                                resolution: "corrected" | "dismissed" | null;
+                                resolution_note: string | null;
+                                resolved_at: string | null;
+                                created_at: string;
+                                reporter: {
+                                    id: string;
+                                    name: string;
+                                    email: string;
+                                };
+                                quiz_id: string;
+                                position: number;
+                                snapshot: {
+                                    statement: string;
+                                    alternatives: string[];
+                                    correct_index: number;
+                                    explanation: string;
+                                    source_reference: string | null;
+                                };
+                            }[];
+                        }[];
+                        page: number;
+                        page_size: number;
+                        total: number;
+                    };
+                };
+            };
+            /** @description Não autenticado */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Acesso restrito a administradores */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    resolveQuestionReports: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                question_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    /** @enum {string} */
+                    resolution: "corrected" | "dismissed";
+                    note: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Contestações resolvidas */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        resolved: number;
+                    };
+                };
+            };
+            /** @description Não autenticado */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Acesso restrito a administradores */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Nenhuma contestação aberta para esta pergunta */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Dados inválidos */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     listOwnQuestions: {
         parameters: {
             query?: {
@@ -3660,6 +3862,7 @@ export interface operations {
                             accuracy: number;
                             /** @enum {string} */
                             difficulty_level: "very_easy" | "easy" | "medium" | "hard" | "very_hard";
+                            under_admin_review: boolean;
                         }[];
                         page: number;
                         page_size: number;
@@ -3804,6 +4007,7 @@ export interface operations {
                         accuracy: number;
                         /** @enum {string} */
                         difficulty_level: "very_easy" | "easy" | "medium" | "hard" | "very_hard";
+                        under_admin_review: boolean;
                     };
                 };
             };
@@ -4094,6 +4298,10 @@ export interface operations {
                             rejected_at: string;
                         }[];
                         unread_review_events: number;
+                        reports: {
+                            questions_with_open_reports: number;
+                            questions_corrected_after_report: number;
+                        };
                     };
                 };
             };
@@ -4385,6 +4593,70 @@ export interface operations {
             };
             /** @description Quiz ainda em andamento */
             409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    reportQuizQuestion: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                position: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    /** @enum {string} */
+                    reason: "statement" | "answer_key" | "explanation" | "other";
+                    message: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Contestação registrada */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        id: string;
+                        /** @enum {string} */
+                        status: "open";
+                        created_at: string;
+                    };
+                };
+            };
+            /** @description Não autenticado */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Quiz não encontrado (ou de outro cliente) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description O cliente já tem contestação aberta para esta pergunta */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Dados inválidos ou posição fora do quiz */
+            422: {
                 headers: {
                     [name: string]: unknown;
                 };

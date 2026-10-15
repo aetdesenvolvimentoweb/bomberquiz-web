@@ -138,7 +138,7 @@ export function ResultQuizPage() {
       <div className="mt-8 space-y-4">
         <h2 className="text-lg font-medium">Revisão das questões</h2>
         {result.questions.map((question, index) => (
-          <QuizResultQuestion key={question.position} question={question} index={index} />
+          <QuizResultQuestion key={question.position} quizId={result.quiz_id} question={question} index={index} />
         ))}
       </div>
 

@@ -20,6 +20,7 @@ import { useQuizCountdown, QuizTimer } from "./quiz-timer"
 import { ApiError } from "@/lib/api/errors"
 import { useNetworkStatus } from "@/features/pwa/use-network-status"
 import { reportPwaEvent } from "@/features/pwa/report-pwa-event"
+import { ReportQuestionButton } from "./report-question-button"
 
 const ALTERNATIVE_LETTERS = ["A", "B", "C", "D"] as const
 
@@ -194,7 +195,11 @@ function AnswerQuizFlow({ quizId, startPayload }: { quizId: string; startPayload
       <Progress value={((currentPosition - 1) / startPayload.total_questions) * 100} className="mt-2" />
 
       <div className="mt-6">
-        <p className="text-xs font-medium uppercase text-muted-foreground">{question.subject_name}</p>
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-xs font-medium uppercase text-muted-foreground">{question.subject_name}</p>
+          {/* key: o estado "já reportado" é desta questão, não da próxima. */}
+          <ReportQuestionButton key={currentPosition} quizId={quizId} position={currentPosition} />
+        </div>
         {question.image_url && <img src={question.image_url} alt="" className="mt-2 max-w-full rounded-md" />}
         <p className="mt-2 text-lg font-medium">{question.statement}</p>
       </div>

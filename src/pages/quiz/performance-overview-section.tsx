@@ -146,7 +146,10 @@ export function PerformanceOverviewSection({ performance }: { performance: Perfo
         <div>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h3 className="font-medium">{mode === "axis" ? "Aproveitamento por eixo" : "Aproveitamento por matéria"}</h3>
-            <div className="flex flex-wrap items-center gap-2">
+            {/* Select nativo assume a largura da opção mais longa — nome de matéria
+                comprido empurrava a página para fora da tela no celular. Lá cada
+                select ocupa a linha inteira; no desktop, largura fixa. */}
+            <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
               <div className="flex gap-2">
                 <Button type="button" size="sm" variant={mode === "axis" ? "default" : "outline"} onClick={() => setMode("axis")}>
                   Por eixo
@@ -156,7 +159,7 @@ export function PerformanceOverviewSection({ performance }: { performance: Perfo
                 </Button>
               </div>
               <select
-                className="flex h-9 rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="h-9 w-full min-w-0 rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:w-56"
                 value={selectedAxis?.axis_id ?? ""}
                 onChange={(e) => setSelectedAxisId(e.target.value)}
                 aria-label="Eixo"
@@ -169,7 +172,7 @@ export function PerformanceOverviewSection({ performance }: { performance: Perfo
               </select>
               {mode === "subject" && (
                 <select
-                  className="flex h-9 rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className="h-9 w-full min-w-0 rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring sm:w-56"
                   value={selectedSubject?.subject_id ?? ""}
                   onChange={(e) => setSelectedSubjectId(e.target.value)}
                   aria-label="Matéria"

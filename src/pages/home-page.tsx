@@ -1,12 +1,12 @@
-import { Link } from "react-router-dom"
 import { Mascot, type MascotPose } from "@/components/mascot"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { useSession } from "@/features/session/use-session"
 import { useActiveSubjects } from "@/features/content/catalog-api"
 import { usePerformance, useQuizHistory, type PerformanceResponse } from "@/features/quiz/performance-api"
+import { useSession } from "@/features/session/use-session"
 import { useMySubscription } from "@/features/subscription/subscription-api"
+import { Link } from "react-router-dom"
 
 // Aviso proativo de expiração: só faz sentido nos últimos dias, para não virar
 // ruído visual o ciclo inteiro da assinatura.
@@ -219,7 +219,7 @@ function TrainingSuggestion({
           {/* Convite, matéria e número em linhas próprias: numa frase só, nomes
               longos ("… - CBMGO") se misturavam ao "Reforce" e ao percentual. */}
           <div className="min-w-0">
-            <p className="text-sm text-muted-foreground">Sugestão de treino · reforce esta matéria</p>
+            <p className="text-sm text-muted-foreground">Sugestão de treino · Reforce esta matéria</p>
             <p className="mt-1 font-medium">{weakest.subject_name}</p>
             <Badge variant={weakest.status_badge === "fraco" ? "destructive" : "outline"} className="mt-2">
               {Math.round(weakest.accuracy * 100)}% de acerto

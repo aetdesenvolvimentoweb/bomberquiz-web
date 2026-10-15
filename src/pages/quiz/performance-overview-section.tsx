@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { Link } from "react-router-dom"
 import { Bar, BarChart, CartesianGrid, Cell, LabelList, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -28,7 +29,18 @@ const STATUS_BADGE_VARIANT: Record<Subject["status_badge"], "secondary" | "destr
   forte: "success",
 }
 
-function SubjectList({ title, subjects, emptyText }: { title: string; subjects: Subject[]; emptyText: string }) {
+function SubjectList({
+  title,
+  subjects,
+  emptyText,
+  trainable = false,
+}: {
+  title: string
+  subjects: Subject[]
+  emptyText: string
+  /** Ponto fraco é para agir: cada matéria ganha o atalho da tela inicial. */
+  trainable?: boolean
+}) {
   return (
     <div>
       <h3 className="font-medium">{title}</h3>
@@ -42,6 +54,15 @@ function SubjectList({ title, subjects, emptyText }: { title: string; subjects: 
               <span className="flex items-center gap-2">
                 <Badge variant={STATUS_BADGE_VARIANT[subject.status_badge]}>{STATUS_BADGE_LABELS[subject.status_badge]}</Badge>
                 <span className="text-muted-foreground">{Math.round(subject.accuracy * 100)}%</span>
+                {trainable && (
+                  <Link
+                    to={`/quiz/iniciar?modo=free_subject&materia=${encodeURIComponent(subject.subject_id)}`}
+                    className="font-medium text-primary underline underline-offset-2"
+                    aria-label={`Treinar ${subject.subject_name}`}
+                  >
+                    Treinar
+                  </Link>
+                )}
               </span>
             </li>
           ))}
@@ -107,6 +128,18 @@ export function PerformanceOverviewSection({ performance }: { performance: Perfo
           </p>
           <p className="text-xs text-muted-foreground">Matérias estudadas</p>
         </div>
+      </div>
+
+      {/* Logo depois dos números e antes dos gráficos: é a parte em que dá
+          para agir ("treinar esta"), e não deve ficar abaixo de dois gráficos. */}
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+        <SubjectList
+          title="Pontos fracos"
+          subjects={weakest_subjects}
+          emptyText="Sem dados suficientes ainda (mínimo 10 respostas por matéria)."
+          trainable
+        />
+        <SubjectList title="Pontos fortes" subjects={strongest_subjects} emptyText="Sem dados suficientes ainda (mínimo 10 respostas por matéria)." />
       </div>
 
       {by_axis.length > 0 ? (
@@ -175,11 +208,6 @@ export function PerformanceOverviewSection({ performance }: { performance: Perfo
       ) : (
         <p className="text-sm text-muted-foreground">Responda alguns quizzes para ver seu aproveitamento por matéria.</p>
       )}
-
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-        <SubjectList title="Pontos fracos" subjects={weakest_subjects} emptyText="Sem dados suficientes ainda (mínimo 10 respostas por matéria)." />
-        <SubjectList title="Pontos fortes" subjects={strongest_subjects} emptyText="Sem dados suficientes ainda (mínimo 10 respostas por matéria)." />
-      </div>
     </div>
   )
 }

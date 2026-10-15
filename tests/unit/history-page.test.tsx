@@ -52,7 +52,23 @@ describe("HistoryPage", () => {
     expect(await screen.findByText("Matéria A")).toBeInTheDocument()
     expect(screen.getByText("Finalizado", { selector: "div" })).toBeInTheDocument()
     expect(screen.getByText("7/10")).toBeInTheDocument()
-    expect(screen.getByRole("link", { name: "Ver resultado" })).toHaveAttribute("href", "/quiz/quiz-1/resultado")
+    expect(screen.getByRole("link", { name: /Matéria A/ })).toHaveAttribute("href", "/quiz/quiz-1/resultado")
+  })
+
+  it("no celular, os filtros ficam atrás de um botão que conta os ativos", async () => {
+    mockedApiClient.GET.mockResolvedValue(jsonResponse({ items: [historyItem], page: 1, page_size: 20, total: 1 }))
+
+    renderHistoryPage()
+    const user = userEvent.setup()
+    await screen.findByText("Matéria A")
+
+    const toggle = screen.getByRole("button", { name: "Filtrar" })
+    expect(toggle).toHaveAttribute("aria-expanded", "false")
+    await user.click(toggle)
+    expect(toggle).toHaveAttribute("aria-expanded", "true")
+
+    await user.selectOptions(screen.getByDisplayValue("Todos os status"), "finished")
+    expect(screen.getByRole("button", { name: "Filtrar (1)" })).toBeInTheDocument()
   })
 
   it("sem quiz nenhum e sem filtro, convida para o primeiro quiz em vez de mostrar tabela vazia", async () => {

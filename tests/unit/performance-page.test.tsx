@@ -102,6 +102,12 @@ describe("PerformancePage", () => {
     expect(weakestSection.textContent).toContain("Matéria Fraca")
     const strongestSection = screen.getByText("Pontos fortes").closest("div")!
     expect(strongestSection.textContent).toContain("Matéria Forte")
+    // Só o ponto fraco ganha o atalho de treino.
+    expect(screen.getByRole("link", { name: "Treinar Matéria Fraca" })).toHaveAttribute(
+      "href",
+      expect.stringMatching(/^\/quiz\/iniciar\?modo=free_subject&materia=/),
+    )
+    expect(screen.queryByRole("link", { name: "Treinar Matéria Forte" })).not.toBeInTheDocument()
   })
 
   it("trocar o período da timeline dispara nova busca com months certo", async () => {

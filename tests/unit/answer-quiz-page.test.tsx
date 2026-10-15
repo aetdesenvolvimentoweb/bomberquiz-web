@@ -1,7 +1,7 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from "vitest"
 import { act, render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { MemoryRouter, Routes, Route } from "react-router-dom"
+import { createMemoryRouter, RouterProvider } from "react-router-dom"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { toast } from "sonner"
 import { AnswerQuizPage } from "@/pages/quiz/answer-quiz-page"
@@ -15,6 +15,21 @@ vi.mock("@/lib/api/client", () => ({
 vi.mock("sonner", () => ({
   toast: { success: vi.fn(), error: vi.fn() },
 }))
+
+// O roteador de dados cria um `Request` (do Node) a cada navegação, passando o
+// `AbortSignal` do jsdom — que o Node recusa ("Expected signal to be an
+// instance of AbortSignal") e a navegação morre em silêncio. Nos testes o
+// cancelamento não importa: o sinal é só descartado.
+const NodeRequest = globalThis.Request
+vi.stubGlobal(
+  "Request",
+  class extends NodeRequest {
+    constructor(input: RequestInfo | URL, init?: RequestInit) {
+      const { signal: _signal, ...rest } = init ?? {}
+      super(input, rest)
+    }
+  },
+)
 
 const mockedApiClient = apiClient as unknown as {
   GET: ReturnType<typeof vi.fn>
@@ -50,16 +65,22 @@ function buildStartPayload(overrides: Partial<StartQuizResponse> = {}): StartQui
 
 function renderAnswerQuizPage(startPayload: StartQuizResponse) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-  return render(
+  // Roteador "de dados" (como o do app): o aviso de saída usa useBlocker, que
+  // não existe no <MemoryRouter> simples.
+  const router = createMemoryRouter(
+    [
+      { path: "/quiz/:quizId", element: <AnswerQuizPage /> },
+      { path: "/quiz/:quizId/resultado", element: <div data-testid="result-route" /> },
+      { path: "/inicio", element: <div data-testid="home-route" /> },
+    ],
+    { initialEntries: [{ pathname: `/quiz/${startPayload.quiz_id}`, state: { startPayload } }] },
+  )
+  render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={[{ pathname: `/quiz/${startPayload.quiz_id}`, state: { startPayload } }]}>
-        <Routes>
-          <Route path="/quiz/:quizId" element={<AnswerQuizPage />} />
-          <Route path="/quiz/:quizId/resultado" element={<div data-testid="result-route" />} />
-        </Routes>
-      </MemoryRouter>
+      <RouterProvider router={router} />
     </QueryClientProvider>,
   )
+  return router
 }
 
 beforeEach(() => {
@@ -80,7 +101,7 @@ describe("AnswerQuizPage", () => {
     renderAnswerQuizPage(buildStartPayload({ explanation_mode: "after_each" }))
     const user = userEvent.setup()
 
-    await user.click(screen.getByLabelText("A"))
+    await user.click(screen.getByRole("radio", { name: "A" }))
     await user.click(screen.getByRole("button", { name: "Responder" }))
 
     expect(await screen.findByText("Você acertou")).toBeInTheDocument()
@@ -97,7 +118,7 @@ describe("AnswerQuizPage", () => {
     renderAnswerQuizPage(buildStartPayload({ explanation_mode: "at_end" }))
     const user = userEvent.setup()
 
-    await user.click(screen.getByLabelText("A"))
+    await user.click(screen.getByRole("radio", { name: "A" }))
     await user.click(screen.getByRole("button", { name: "Responder" }))
 
     expect(await screen.findByText("Questão 2 de 2")).toBeInTheDocument()
@@ -110,7 +131,7 @@ describe("AnswerQuizPage", () => {
     renderAnswerQuizPage(buildStartPayload({ explanation_mode: "at_end", total_questions: 1, questions: [buildStartPayload().questions[0]!] }))
     const user = userEvent.setup()
 
-    await user.click(screen.getByLabelText("A"))
+    await user.click(screen.getByRole("radio", { name: "A" }))
     await user.click(screen.getByRole("button", { name: "Responder" }))
 
     expect(await screen.findByTestId("result-route")).toBeInTheDocument()
@@ -122,7 +143,7 @@ describe("AnswerQuizPage", () => {
     renderAnswerQuizPage(buildStartPayload())
     const user = userEvent.setup()
 
-    await user.click(screen.getByLabelText("A"))
+    await user.click(screen.getByRole("radio", { name: "A" }))
     await user.click(screen.getByRole("button", { name: "Responder" }))
 
     expect(await screen.findByTestId("result-route")).toBeInTheDocument()
@@ -156,6 +177,27 @@ describe("AnswerQuizPage", () => {
 
     expect(screen.getByTestId("result-route")).toBeInTheDocument()
     expect(mockedApiClient.POST).toHaveBeenCalledWith("/quizzes/{id}/finish", expect.objectContaining({ params: { path: { id: "quiz-1" } } }))
+  })
+
+  it("pergunta antes de sair do quiz para outra tela", async () => {
+    const router = renderAnswerQuizPage(buildStartPayload())
+    const user = userEvent.setup()
+    await screen.findByText("Questão 1 de 2")
+
+    await act(async () => {
+      void router.navigate("/inicio")
+    })
+    expect(await screen.findByText("Sair do quiz?")).toBeInTheDocument()
+
+    await user.click(screen.getByRole("button", { name: "Continuar no quiz" }))
+    expect(screen.getByText("Questão 1 de 2")).toBeInTheDocument()
+    expect(screen.queryByTestId("home-route")).not.toBeInTheDocument()
+
+    await act(async () => {
+      void router.navigate("/inicio")
+    })
+    await user.click(await screen.findByRole("button", { name: "Sair" }))
+    expect(await screen.findByTestId("home-route")).toBeInTheDocument()
   })
 
   it("encerrar com questões em branco mostra o alerta com a contagem certa", async () => {

@@ -1,7 +1,8 @@
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useNavigate, useSearchParams } from "react-router-dom"
+import { Link, useNavigate, useSearchParams } from "react-router-dom"
 import { toast } from "sonner"
+import { Mascot } from "@/components/mascot"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Switch } from "@/components/ui/switch"
@@ -12,9 +13,45 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useActiveAxes, useActiveSubjects } from "@/features/content/catalog-api"
 import { useStartQuiz } from "@/features/quiz/quiz-api"
 import { startQuizFormSchema, type StartQuizFormValues } from "@/features/quiz/schemas"
+import { useMySubscription } from "@/features/subscription/subscription-api"
 import { ApiError } from "@/lib/api/errors"
 
 const SIZE_OPTIONS = [10, 20, 30, 50] as const
+
+// Cronômetro e justificativa são hábitos de quem estuda, não escolhas de cada
+// quiz: lembrados neste navegador a cada início bem-sucedido. Modo e matéria
+// não entram — esses mudam de um treino para o outro.
+const PREFERENCES_STORAGE_KEY = "bq.quiz.preferences"
+
+type QuizPreferences = Pick<StartQuizFormValues, "timerEnabled" | "timePerQuestionSeconds" | "explanationMode">
+
+const DEFAULT_PREFERENCES: QuizPreferences = {
+  timerEnabled: false,
+  timePerQuestionSeconds: 180,
+  explanationMode: "after_each",
+}
+
+function loadPreferences(): QuizPreferences {
+  try {
+    const parsed = startQuizFormSchema.innerType().pick({
+      timerEnabled: true,
+      timePerQuestionSeconds: true,
+      explanationMode: true,
+    }).safeParse(JSON.parse(localStorage.getItem(PREFERENCES_STORAGE_KEY) ?? "null"))
+    return parsed.success ? parsed.data : DEFAULT_PREFERENCES
+  } catch {
+    // Armazenamento bloqueado (aba anônima, dados limpos): fica no padrão.
+    return DEFAULT_PREFERENCES
+  }
+}
+
+function savePreferences({ timerEnabled, timePerQuestionSeconds, explanationMode }: StartQuizFormValues) {
+  try {
+    localStorage.setItem(PREFERENCES_STORAGE_KEY, JSON.stringify({ timerEnabled, timePerQuestionSeconds, explanationMode }))
+  } catch {
+    // Sem armazenamento, só não lembra da próxima vez.
+  }
+}
 
 const MODE_OPTIONS = [
   { value: "tap_simulation", title: "Simulado TAP", description: "Monta o simulado completo, seguindo o peso de cada eixo no edital." },
@@ -23,6 +60,29 @@ const MODE_OPTIONS = [
 ] as const
 
 export function StartQuizPage() {
+  const { data: subscription } = useMySubscription()
+
+  // Sem acesso, o POST /quizzes recusa com 402 — e o cliente só descobria isso
+  // depois de montar o quiz inteiro e clicar. Melhor dizer antes.
+  if (subscription?.access_status === "inactive") {
+    return (
+      <div className="mx-auto flex max-w-md flex-col items-center gap-4 px-4 py-16 text-center">
+        <Mascot pose="encouraging" alt="" className="w-[110px] sm:w-[130px]" />
+        <div>
+          <h1 className="text-xl font-semibold">Seu acesso ao quiz está bloqueado</h1>
+          <p className="mt-2 text-sm text-muted-foreground">Assine um plano para voltar a treinar.</p>
+        </div>
+        <Button asChild>
+          <Link to="/planos">Assinar um plano</Link>
+        </Button>
+      </div>
+    )
+  }
+
+  return <StartQuizForm />
+}
+
+function StartQuizForm() {
   const navigate = useNavigate()
   const startQuizMutation = useStartQuiz()
   const { data: axesData, isPending: axesPending } = useActiveAxes()
@@ -43,20 +103,36 @@ export function StartQuizPage() {
       ...(presetSubjectId && { size: 10 }),
       subjectId: presetSubjectId,
       axisId: "",
-      timerEnabled: false,
-      timePerQuestionSeconds: 180,
-      explanationMode: "after_each",
+      ...loadPreferences(),
     },
   })
 
   const mode = form.watch("mode")
+  const size = form.watch("size")
   const timerEnabled = form.watch("timerEnabled")
+  const timePerQuestionSeconds = form.watch("timePerQuestionSeconds")
+  const explanationMode = form.watch("explanationMode")
   const axisOptions = axesData?.items ?? []
   const subjectOptions = subjectsData?.items ?? []
+
+  // O simulado tem o tamanho da prova: a soma dos pesos dos eixos ativos
+  // (QUIZ-RF-001). Antes de os eixos chegarem, o resumo só omite o número.
+  const tapSize = axesData ? axisOptions.reduce((sum, axis) => sum + axis.tap_weight, 0) : undefined
+  const questionCount = mode === "tap_simulation" ? tapSize : size
+  const summary = [
+    questionCount ? `${questionCount} questões` : null,
+    timerEnabled && questionCount
+      ? `${Math.round((questionCount * timePerQuestionSeconds) / 60)} min no cronômetro`
+      : timerEnabled
+        ? null
+        : "sem cronômetro",
+    explanationMode === "after_each" ? "explicação após cada questão" : "explicações no final",
+  ].filter(Boolean)
 
   async function onSubmit(values: StartQuizFormValues) {
     try {
       const result = await startQuizMutation.mutateAsync(values)
+      savePreferences(values)
       navigate(`/quiz/${result.quiz_id}`, { state: { startPayload: result } })
     } catch (err) {
       const message = err instanceof ApiError ? err.message : "Não foi possível iniciar o quiz."
@@ -255,9 +331,15 @@ export function StartQuizPage() {
             )}
           />
 
-          <Button type="submit" loading={startQuizMutation.isPending} className="w-full">
-            Iniciar quiz
-          </Button>
+          <div>
+            {/* O que o clique abaixo vai pôr na frente do cliente, num relance. */}
+            <p className="mb-2 text-center text-sm text-muted-foreground">
+              {summary.join(" · ")}
+            </p>
+            <Button type="submit" loading={startQuizMutation.isPending} className="w-full">
+              Iniciar quiz
+            </Button>
+          </div>
         </form>
       </Form>
     </div>

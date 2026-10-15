@@ -5,7 +5,6 @@ import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import {
   AlertDialog,
@@ -52,7 +51,9 @@ function ResetStatsDialog() {
       }}
     >
       <AlertDialogTrigger asChild>
-        <Button variant="destructive">Zerar estatísticas</Button>
+        <Button variant="link" className="h-auto p-0 text-destructive">
+          Zerar estatísticas
+        </Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
@@ -105,16 +106,16 @@ function ResetStatsDialog() {
   )
 }
 
+/**
+ * Uma linha discreta no rodapé, não um cartão: é uma ação rara e destrutiva,
+ * e o cartão "Zona de risco" com botão vermelho ocupava espaço fixo e chamava
+ * o olho numa tela que é para acompanhar o progresso. A proteção de verdade
+ * (senha + confirmação) continua no diálogo.
+ */
 export function ResetStatsSection() {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Zona de risco</CardTitle>
-        <CardDescription>Voltou a estudar do zero? Zere seu histórico de desempenho.</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <ResetStatsDialog />
-      </CardContent>
-    </Card>
+    <div className="border-t pt-6 text-sm text-muted-foreground">
+      Voltou a estudar do zero? <ResetStatsDialog />
+    </div>
   )
 }

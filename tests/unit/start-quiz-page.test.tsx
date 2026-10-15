@@ -47,6 +47,7 @@ function renderStartQuizPage(entry = "/quiz/iniciar") {
 }
 
 beforeEach(() => {
+  localStorage.clear()
   mockedApiClient.GET.mockReset()
   mockedApiClient.POST.mockReset()
   mockedApiClient.GET.mockImplementation((path: string) => {
@@ -57,6 +58,36 @@ beforeEach(() => {
 })
 
 describe("StartQuizPage", () => {
+  it("sem acesso, avisa antes do formulário e leva aos planos", async () => {
+    mockedApiClient.GET.mockImplementation((path: string) => {
+      if (path === "/me/subscription")
+        return Promise.resolve(
+          jsonResponse({ access_status: "inactive", active_until: null, source: null, current_subscription: null, pending_payments: [], refund_eligible_payments: [] }),
+        )
+      return Promise.resolve(errorResponse("not_found", "not mocked", 404))
+    })
+
+    renderStartQuizPage()
+
+    expect(await screen.findByRole("link", { name: "Assinar um plano" })).toHaveAttribute("href", "/planos")
+    expect(screen.queryByRole("button", { name: "Iniciar quiz" })).not.toBeInTheDocument()
+  })
+
+  it("resume o quiz acima do botão, com o simulado do tamanho da soma dos pesos", async () => {
+    renderStartQuizPage()
+
+    expect(await screen.findByText("9 questões · sem cronômetro · explicação após cada questão")).toBeInTheDocument()
+  })
+
+  it("lembra cronômetro e justificativa do último quiz iniciado", async () => {
+    localStorage.setItem("bq.quiz.preferences", JSON.stringify({ timerEnabled: true, timePerQuestionSeconds: 120, explanationMode: "at_end" }))
+
+    renderStartQuizPage()
+
+    expect(await screen.findByText("9 questões · 18 min no cronômetro · explicações no final")).toBeInTheDocument()
+    expect(screen.getByRole("radio", { name: "Ver todas no final" })).toBeChecked()
+  })
+
   // Atalho "Treinar esta matéria" da tela inicial.
   it("abre em livre por matéria, com a matéria indicada no link", async () => {
     renderStartQuizPage("/quiz/iniciar?modo=free_subject&materia=subject-1")
@@ -119,6 +150,11 @@ describe("StartQuizPage", () => {
       ),
     )
     expect(await screen.findByTestId("answer-route")).toBeInTheDocument()
+    expect(JSON.parse(localStorage.getItem("bq.quiz.preferences") ?? "null")).toEqual({
+      timerEnabled: false,
+      timePerQuestionSeconds: 180,
+      explanationMode: "after_each",
+    })
   })
 
   it("mostra a mensagem do servidor via toast quando o simulado TAP é impossível (409)", async () => {

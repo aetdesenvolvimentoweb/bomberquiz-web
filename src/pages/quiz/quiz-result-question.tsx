@@ -3,6 +3,9 @@ import type { QuizResultResponse } from "@/features/quiz/quiz-api"
 
 type ResultQuestion = QuizResultResponse["questions"][number]
 
+// As mesmas letras da tela de resposta, para "marquei a C" bater na revisão.
+const ALTERNATIVE_LETTERS = ["A", "B", "C", "D"] as const
+
 function statusBadge(question: ResultQuestion) {
   if (question.submitted_index === null) {
     // is_correct=false ⇒ finalização manual/expiração (contou como erro, QUIZ-RF-003
@@ -43,6 +46,9 @@ export function QuizResultQuestion({ question, index }: { question: ResultQuesti
                 (isSubmitted && !isCorrect ? " border-destructive bg-destructive/10" : "")
               }
             >
+              <span aria-hidden className="mr-2 font-medium text-muted-foreground">
+                {ALTERNATIVE_LETTERS[altIndex]})
+              </span>
               {alternative}
               {isCorrect && <span className="ml-2 text-xs font-medium text-success">(gabarito)</span>}
               {isSubmitted && !isCorrect && <span className="ml-2 text-xs font-medium text-destructive">(sua resposta)</span>}

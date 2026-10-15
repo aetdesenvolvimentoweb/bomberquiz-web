@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from "react"
-import { useLocation, useNavigate, useParams, Link } from "react-router-dom"
+import { useBlocker, useLocation, useNavigate, useParams, Link } from "react-router-dom"
 import { toast } from "sonner"
+import { Mascot } from "@/components/mascot"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Badge } from "@/components/ui/badge"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,6 +20,8 @@ import { useQuizCountdown, QuizTimer } from "./quiz-timer"
 import { ApiError } from "@/lib/api/errors"
 import { useNetworkStatus } from "@/features/pwa/use-network-status"
 import { reportPwaEvent } from "@/features/pwa/report-pwa-event"
+
+const ALTERNATIVE_LETTERS = ["A", "B", "C", "D"] as const
 
 type AnswerRecord =
   | { kind: "after_each"; submittedIndex: number; correct: boolean; correctIndex: number; explanation: string; sourceReference: string | null }
@@ -77,6 +79,20 @@ function AnswerQuizFlow({ quizId, startPayload }: { quizId: string; startPayload
   }, [isOnline, quizId])
 
   const resultUrl = `/quiz/${quizId}/resultado`
+
+  // O quiz vive só no estado da navegação: sair (pelo menu, voltar ou
+  // recarregar) e voltar dá em "Sessão de quiz perdida". As respostas já
+  // enviadas ficam salvas, mas o resto do quiz não tem volta — então pergunta
+  // antes. Ir para o resultado é o fim natural e passa direto.
+  const leaveBlocker = useBlocker(({ nextLocation }) => nextLocation.pathname !== resultUrl)
+  useEffect(() => {
+    function warnBeforeUnload(event: BeforeUnloadEvent) {
+      event.preventDefault()
+    }
+    window.addEventListener("beforeunload", warnBeforeUnload)
+    return () => window.removeEventListener("beforeunload", warnBeforeUnload)
+  }, [])
+
   const countdown = useQuizCountdown(startPayload.started_at, startPayload.time_limit_seconds)
   const answeredCount = Object.keys(answers).length
   const unansweredCount = startPayload.total_questions - answeredCount
@@ -203,21 +219,29 @@ function AnswerQuizFlow({ quizId, startPayload }: { quizId: string; startPayload
               }
             >
               <RadioGroupItem value={index.toString()} id={`alt-${index}`} />
-              {alternative}
+              {/* A letra é referência visual ("marquei a C"); o leitor de tela já
+                  anuncia a posição na lista, então fica fora do nome acessível. */}
+              <span aria-hidden className="font-medium text-muted-foreground">
+                {ALTERNATIVE_LETTERS[index]})
+              </span>
+              <span>{alternative}</span>
             </label>
           )
         })}
       </RadioGroup>
 
       {currentFeedback?.kind === "after_each" && (
-        <div className="mt-4 rounded-lg border p-4">
-          <Badge variant={currentFeedback.correct ? "success" : "destructive"}>
-            {currentFeedback.correct ? "Você acertou" : "Você errou"}
-          </Badge>
-          <p className="mt-2 text-sm">{currentFeedback.explanation}</p>
-          {currentFeedback.sourceReference && (
-            <p className="mt-1 text-xs text-muted-foreground">{currentFeedback.sourceReference}</p>
-          )}
+        <div className="mt-4 flex items-start gap-4 rounded-lg border p-4">
+          <Mascot pose={currentFeedback.correct ? "happy" : "encouraging"} alt="" className="w-[48px] sm:w-[60px]" />
+          <div>
+            <p className={"font-medium " + (currentFeedback.correct ? "text-success" : "text-destructive")}>
+              {currentFeedback.correct ? "Você acertou" : "Você errou"}
+            </p>
+            <p className="mt-1 text-sm">{currentFeedback.explanation}</p>
+            {currentFeedback.sourceReference && (
+              <p className="mt-1 text-xs text-muted-foreground">{currentFeedback.sourceReference}</p>
+            )}
+          </div>
         </div>
       )}
 
@@ -247,6 +271,22 @@ function AnswerQuizFlow({ quizId, startPayload }: { quizId: string; startPayload
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={() => void doFinish()}>Encerrar</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={leaveBlocker.state === "blocked"} onOpenChange={(open) => !open && leaveBlocker.reset?.()}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Sair do quiz?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Não dá para voltar a este quiz depois. As respostas já enviadas ficam no seu histórico. Para ver o
+              resultado agora, use "Encerrar quiz".
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Continuar no quiz</AlertDialogCancel>
+            <AlertDialogAction onClick={() => leaveBlocker.proceed?.()}>Sair</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

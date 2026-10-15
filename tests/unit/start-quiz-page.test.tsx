@@ -32,11 +32,11 @@ function errorResponse(code: string, message: string, status = 409) {
   }
 }
 
-function renderStartQuizPage() {
+function renderStartQuizPage(entry = "/quiz/iniciar") {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={["/quiz/iniciar"]}>
+      <MemoryRouter initialEntries={[entry]}>
         <Routes>
           <Route path="/quiz/iniciar" element={<StartQuizPage />} />
           <Route path="/quiz/:quizId" element={<div data-testid="answer-route" />} />
@@ -57,6 +57,15 @@ beforeEach(() => {
 })
 
 describe("StartQuizPage", () => {
+  // Atalho "Treinar esta matéria" da tela inicial.
+  it("abre em livre por matéria, com a matéria indicada no link", async () => {
+    renderStartQuizPage("/quiz/iniciar?modo=free_subject&materia=subject-1")
+
+    expect(await screen.findByLabelText("Matéria")).toBeInTheDocument()
+    expect(screen.getByRole("radio", { name: /Livre por matéria/ })).toBeChecked()
+    await waitFor(() => expect(screen.getByRole("combobox", { name: "Matéria" })).toHaveTextContent("Primeiros Socorros"))
+  })
+
   it("modo livre por matéria mostra o seletor de matéria; livre por eixo mostra o de eixo", async () => {
     renderStartQuizPage()
     const user = userEvent.setup()

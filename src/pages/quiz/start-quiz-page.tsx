@@ -1,6 +1,6 @@
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useNavigate } from "react-router-dom"
+import { useNavigate, useSearchParams } from "react-router-dom"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
@@ -28,11 +28,20 @@ export function StartQuizPage() {
   const { data: axesData, isPending: axesPending } = useActiveAxes()
   const { data: subjectsData, isPending: subjectsPending } = useActiveSubjects()
 
+  // Atalho da tela inicial ("Treinar esta matéria"): chega já em livre por
+  // matéria, com a matéria e 10 questões marcadas. Só pré-preenche — o
+  // formulário continua editável, e um id que não exista mais simplesmente não
+  // aparece selecionado no seletor (a validação pede para escolher).
+  const [searchParams] = useSearchParams()
+  const presetSubjectId =
+    searchParams.get("modo") === "free_subject" ? (searchParams.get("materia") ?? "") : ""
+
   const form = useForm<StartQuizFormValues>({
     resolver: zodResolver(startQuizFormSchema),
     defaultValues: {
-      mode: "tap_simulation",
-      subjectId: "",
+      mode: presetSubjectId ? "free_subject" : "tap_simulation",
+      ...(presetSubjectId && { size: 10 }),
+      subjectId: presetSubjectId,
       axisId: "",
       timerEnabled: false,
       timePerQuestionSeconds: 180,

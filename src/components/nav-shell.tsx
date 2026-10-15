@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { useSession } from "@/features/session/use-session"
 import { useLogout } from "@/features/auth/api"
-import { getInitials } from "@/lib/initials"
+import { UserAvatar } from "@/components/user-avatar"
 import { cn } from "@/lib/utils"
 
 // `badge`: contador ao lado do rótulo (ex.: contestações abertas no painel);
@@ -111,7 +111,7 @@ export function NavShell({ navItems }: { navItems: NavEntry[] }) {
               <div className="hidden md:block">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    {/* Só o círculo de iniciais: o nome já abre logo abaixo, no
+                    {/* Só o círculo da foto (ou das iniciais): o nome já abre logo abaixo, no
                         DropdownMenuLabel, e repeti-lo no botão gastava espaço do
                         header sem informar nada de novo. O `aria-label` carrega
                         o nome porque, sem o texto visível, as iniciais sozinhas
@@ -120,9 +120,9 @@ export function NavShell({ navItems }: { navItems: NavEntry[] }) {
                       variant="ghost"
                       size="icon"
                       aria-label={`Conta de ${user.name}`}
-                      className="h-9 w-9 rounded-full bg-muted text-xs font-medium"
+                      className="h-9 w-9 rounded-full p-0"
                     >
-                      {getInitials(user.name)}
+                      <UserAvatar name={user.name} avatarUrl={user.avatarUrl} size={36} className="h-9 w-9 text-xs" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
@@ -192,9 +192,7 @@ export function NavShell({ navItems }: { navItems: NavEntry[] }) {
           {user && (
             <div className="mt-auto space-y-1 border-t pt-4">
               <div className="flex items-center gap-2 px-3 py-1">
-                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-muted text-xs font-medium">
-                  {getInitials(user.name)}
-                </span>
+                <UserAvatar name={user.name} avatarUrl={user.avatarUrl} size={28} className="h-7 w-7 text-xs" />
                 <span className="text-sm font-medium">{user.name}</span>
               </div>
               <Link

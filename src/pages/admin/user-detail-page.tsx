@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Spinner } from "@/components/ui/spinner"
+import { UserAvatar } from "@/components/user-avatar"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { useAdminUserDetail, type RecentSubscription } from "@/features/users/users-admin-api"
 import { ApiError } from "@/lib/api/errors"
@@ -84,18 +85,21 @@ export function UserDetailPage() {
       {backLink}
 
       <div className="flex flex-wrap items-start justify-between gap-4">
-        <div className="space-y-1">
-          <h1 className="text-2xl font-semibold">{user.name}</h1>
-          <p className="text-sm text-muted-foreground">{user.email}</p>
-          <div className="flex flex-wrap items-center gap-2 pt-1">
-            <Badge variant={user.role === "client" ? "secondary" : user.role === "partner" ? "success" : "default"}>
-              {ROLE_LABELS[user.role]}
-            </Badge>
-            <Badge variant="outline">Conta {STATUS_LABELS[user.status].toLowerCase()}</Badge>
+        <div className="flex items-start gap-4">
+          <UserAvatar name={user.name} avatarUrl={user.avatar_url} size={64} className="h-16 w-16 text-lg" />
+          <div className="space-y-1">
+            <h1 className="text-2xl font-semibold">{user.name}</h1>
+            <p className="text-sm text-muted-foreground">{user.email}</p>
+            <div className="flex flex-wrap items-center gap-2 pt-1">
+              <Badge variant={user.role === "client" ? "secondary" : user.role === "partner" ? "success" : "default"}>
+                {ROLE_LABELS[user.role]}
+              </Badge>
+              <Badge variant="outline">Conta {STATUS_LABELS[user.status].toLowerCase()}</Badge>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Cadastro em {formatDate(user.created_at)} · Último login {formatDate(user.last_login_at)}
+            </p>
           </div>
-          <p className="text-sm text-muted-foreground">
-            Cadastro em {formatDate(user.created_at)} · Último login {formatDate(user.last_login_at)}
-          </p>
         </div>
 
         <div className="flex flex-wrap gap-2">

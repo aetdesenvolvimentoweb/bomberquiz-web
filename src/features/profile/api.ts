@@ -1,7 +1,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { apiClient } from "@/lib/api/client"
-import { unwrap } from "@/lib/api/errors"
-import { SESSION_QUERY_KEY } from "@/features/session/use-session"
+import { apiErrorFrom, unwrap } from "@/lib/api/errors"
+import { env } from "@/lib/env"
+import { SESSION_QUERY_KEY, type SessionUser } from "@/features/session/use-session"
 import type { UpdateProfileFormValues } from "./schemas"
 
 export function useUpdateProfile() {
@@ -78,4 +79,41 @@ export function useDeleteAccount() {
       queryClient.clear()
     },
   })
+}
+
+// PROF-RF-005 — avatar (multipart). Fora do contrato tipado do openapi-fetch,
+// como o upload de imagem de pergunta (features/content/questions-api.ts).
+async function avatarRequest(method: "POST" | "DELETE", body?: FormData): Promise<{ user: SessionUser }> {
+  const res = await fetch(`${env.API_BASE_URL}/me/avatar`, { method, credentials: "include", body })
+  const json = await res.json().catch(() => null)
+  if (!res.ok) throw apiErrorFrom(res.status, json)
+  return json as { user: SessionUser }
+}
+
+function useAvatarMutation<TVariables>(request: (variables: TVariables) => Promise<{ user: SessionUser }>) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: request,
+    // A resposta já traz o usuário atualizado: a foto troca no menu na hora,
+    // sem esperar o refetch de /me.
+    onSuccess: ({ user }) => {
+      queryClient.setQueryData(SESSION_QUERY_KEY, (current: { user: SessionUser | null; requiresConsentRenewal: boolean } | undefined) =>
+        current ? { ...current, user } : current,
+      )
+      queryClient.invalidateQueries({ queryKey: SESSION_QUERY_KEY })
+    },
+  })
+}
+
+export function useUploadAvatar() {
+  return useAvatarMutation((image: Blob) => {
+    const form = new FormData()
+    form.append("file", image, image.type === "image/webp" ? "avatar.webp" : "avatar.jpg")
+    return avatarRequest("POST", form)
+  })
+}
+
+export function useRemoveAvatar() {
+  return useAvatarMutation(() => avatarRequest("DELETE"))
 }

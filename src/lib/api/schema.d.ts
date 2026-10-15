@@ -3140,6 +3140,7 @@ export interface operations {
                         status: "active" | "inactive" | "deleted";
                         created_at: string;
                         last_login_at: string | null;
+                        avatar_url: string | null;
                         contract: {
                             access: {
                                 /** @enum {string} */

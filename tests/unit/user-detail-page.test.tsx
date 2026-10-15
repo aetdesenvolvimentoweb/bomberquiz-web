@@ -34,6 +34,7 @@ function buildDetail(overrides: Partial<AdminUserDetail> = {}): AdminUserDetail 
     status: "active",
     created_at: "2026-08-01T12:00:00.000Z",
     last_login_at: "2026-10-12T12:00:00.000Z",
+    avatar_url: null,
     contract: {
       access: { status: "active", active_until: "2026-10-20T17:00:00.000Z", source: "courtesy" },
       recent_subscriptions: [

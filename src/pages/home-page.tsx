@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom"
 import { Mascot, type MascotPose } from "@/components/mascot"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { useSession } from "@/features/session/use-session"
@@ -215,11 +216,14 @@ function TrainingSuggestion({
     return (
       <Card>
         <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-sm text-muted-foreground">Sugestão de treino</p>
-            <p className="font-medium">
-              Reforce {weakest.subject_name}: {Math.round(weakest.accuracy * 100)}% de acerto
-            </p>
+          {/* Convite, matéria e número em linhas próprias: numa frase só, nomes
+              longos ("… - CBMGO") se misturavam ao "Reforce" e ao percentual. */}
+          <div className="min-w-0">
+            <p className="text-sm text-muted-foreground">Sugestão de treino · reforce esta matéria</p>
+            <p className="mt-1 font-medium">{weakest.subject_name}</p>
+            <Badge variant={weakest.status_badge === "fraco" ? "destructive" : "outline"} className="mt-2">
+              {Math.round(weakest.accuracy * 100)}% de acerto
+            </Badge>
           </div>
           <Button asChild variant="outline">
             <Link to={`/quiz/iniciar?modo=free_subject&materia=${encodeURIComponent(weakest.subject_id)}`}>

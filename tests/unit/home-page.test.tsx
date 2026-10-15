@@ -147,6 +147,7 @@ describe("HomePage", () => {
     expect(await screen.findByText("Aproveitamento")).toBeInTheDocument()
     expect(screen.getByText("65%")).toBeInTheDocument()
     expect(await screen.findByText("1/5")).toBeInTheDocument()
+    expect(screen.getByText("40% de acerto")).toBeInTheDocument()
     expect(screen.getByRole("link", { name: "Treinar esta matéria" })).toHaveAttribute(
       "href",
       "/quiz/iniciar?modo=free_subject&materia=sub-fisica",

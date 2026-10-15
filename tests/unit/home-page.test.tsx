@@ -177,5 +177,7 @@ describe("HomePage", () => {
     // Assert
     expect(await screen.findByRole("link", { name: "Assinar um plano" })).toHaveAttribute("href", "/planos")
     expect(screen.queryByRole("link", { name: "Iniciar quiz" })).not.toBeInTheDocument()
+    // Um aviso só, no herói — e não um convite a treinar ao lado de um "assine".
+    expect(screen.getAllByText(/acesso ao quiz está bloqueado/)).toHaveLength(1)
   })
 })

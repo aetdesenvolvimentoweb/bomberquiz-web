@@ -47,7 +47,7 @@ export function HomePage() {
   const { user } = useSession()
   const { data: subscription } = useMySubscription()
   const { data: performance, isPending: performancePending } = usePerformance()
-  const { data: history } = useQuizHistory({ page: 1, pageSize: 1 })
+  const { data: history, isPending: historyPending } = useQuizHistory({ page: 1, pageSize: 1 })
   const { data: activeSubjects } = useActiveSubjects()
 
   if (!user) return null
@@ -62,6 +62,10 @@ export function HomePage() {
   // Sem desempenho carregado (ou com erro) trata como novato: é o estado em que
   // o convite genérico continua fazendo sentido.
   const isNewcomer = !performance || performance.overall.quizzes_finished === 0
+  // Pose e frase dependem das duas consultas. Decidir antes de ambas chegarem
+  // mostrava a quem volta o convite de novato (ou a pose de comemoração) por um
+  // instante e depois trocava — então, até lá, frase neutra e lugar reservado.
+  const settled = !performancePending && !historyPending
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-6 px-4 py-8 sm:py-12">
@@ -79,21 +83,18 @@ export function HomePage() {
         </Card>
       )}
 
-      {blocked && (
-        <Card className="w-full border-destructive bg-destructive/10 text-left">
-          <CardContent className="flex items-center justify-between gap-3 p-4">
-            <p className="text-sm">Seu acesso ao quiz está bloqueado. Assine um plano para continuar.</p>
-            <Button asChild size="sm">
-              <Link to="/planos">Assinar</Link>
-            </Button>
-          </CardContent>
-        </Card>
-      )}
-
       <Hero
         firstName={user.name.split(" ")[0] ?? user.name}
-        pose={performancePending ? null : heroPose(isNewcomer, lastQuiz)}
-        message={heroMessage(isNewcomer, lastQuiz)}
+        pose={settled ? heroPose(isNewcomer, lastQuiz) : null}
+        message={
+          // Bloqueado, o próprio herói dá o recado: uma faixa vermelha à parte
+          // dizia "assine" enquanto o herói logo abaixo convidava a treinar.
+          blocked
+            ? "Seu acesso ao quiz está bloqueado. Assine um plano para voltar a treinar."
+            : settled
+              ? heroMessage(isNewcomer, lastQuiz)
+              : "Pronto para treinar para o TAP?"
+        }
         blocked={blocked}
       />
 

@@ -1,7 +1,7 @@
-import type { ReactNode } from "react"
-import ReactMarkdown, { type Components } from "react-markdown"
-import remarkGfm from "remark-gfm"
-import { Link } from "react-router-dom"
+import type { ReactNode } from "react";
+import ReactMarkdown, { type Components } from "react-markdown";
+import { Link } from "react-router-dom";
+import remarkGfm from "remark-gfm";
 
 // Links internos (/privacidade, /termos) navegam pelo router; e-mail abre o
 // programa de e-mail; os demais abrem em outra aba.
@@ -53,7 +53,7 @@ export function LegalDocument({ markdown }: { markdown: string }) {
       <Link to="/" className="text-sm text-muted-foreground hover:text-foreground">
         ← BomberQuiz
       </Link>
-      <article className="mt-6 space-y-4 text-sm text-foreground/90 sm:text-base">
+      <article className="mt-6 space-y-4 text-justify text-sm text-foreground/90 sm:text-base">
         <ReactMarkdown remarkPlugins={[remarkGfm]} components={components}>
           {markdown}
         </ReactMarkdown>

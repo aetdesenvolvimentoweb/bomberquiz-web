@@ -33,7 +33,7 @@ export function LoginPage() {
   // guardadas para reativar sem pedir a senha de novo.
   const [inactiveCredentials, setInactiveCredentials] =
     useState<LoginFormValues | null>(null);
-  const redirectTo = location.state?.from?.pathname ?? "/inicio";
+  const redirectTo = location.state?.from ?? "/inicio";
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),

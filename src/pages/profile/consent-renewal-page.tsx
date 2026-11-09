@@ -1,18 +1,23 @@
-import { toast } from "sonner"
 import { AuthLayout } from "@/components/auth-layout"
 import { Button } from "@/components/ui/button"
-import { useAcceptConsent } from "@/features/profile/api"
 import { useLogout } from "@/features/auth/api"
+import { useAcceptConsent } from "@/features/profile/api"
 import { ApiError } from "@/lib/api/errors"
+import { useLocation, useNavigate, type Location } from "react-router-dom"
+import { toast } from "sonner"
 
 export function ConsentRenewalPage() {
   const acceptConsentMutation = useAcceptConsent()
   const logoutMutation = useLogout()
+  const location = useLocation()
+  const navigate = useNavigate()
+  const from = (location.state as { from?: Location } | null)?.from
 
   async function handleAccept() {
     try {
       await acceptConsentMutation.mutateAsync()
       toast.success("Termos aceitos.")
+      navigate(from ? { pathname: from.pathname, search: from.search, hash: from.hash } : "/inicio", { replace: true })
     } catch (err) {
       const message = err instanceof ApiError ? err.message : "Não foi possível registrar seu aceite."
       toast.error(message)

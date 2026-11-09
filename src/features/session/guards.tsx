@@ -1,4 +1,4 @@
-import { Navigate, Outlet, useLocation } from "react-router-dom"
+import { Navigate, Outlet, useLocation, type Location } from "react-router-dom"
 import { useSession } from "./use-session"
 import { LoadingScreen } from "@/components/loading-screen"
 import { SessionErrorScreen } from "@/components/session-error-screen"
@@ -18,10 +18,14 @@ export function RequireAuth() {
 /** Impede usuário já logado de ver telas de login/cadastro/recuperação. */
 export function RequireGuest() {
   const { user, isPending, isError, refetch } = useSession()
+  const location = useLocation()
+  // O login grava a sessão antes de navegar, então este guard também roda nesse
+  // momento e precisa levar ao mesmo destino guardado pelo RequireAuth.
+  const from = (location.state as { from?: Location } | null)?.from
 
   if (isPending) return <LoadingScreen />
   if (isError) return <SessionErrorScreen onRetry={refetch} />
-  if (user) return <Navigate to="/inicio" replace />
+  if (user) return <Navigate to={from ?? "/inicio"} replace />
 
   return <Outlet />
 }
@@ -34,7 +38,7 @@ export function ConsentGate() {
   if (isPending) return <LoadingScreen />
   if (isError) return <SessionErrorScreen onRetry={refetch} />
   if (requiresConsentRenewal && location.pathname !== "/consentimento") {
-    return <Navigate to="/consentimento" replace />
+    return <Navigate to="/consentimento" replace state={{ from: location }} />
   }
 
   return <Outlet />

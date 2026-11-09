@@ -51,7 +51,12 @@ export function useAcceptConsent() {
 
   return useMutation({
     mutationFn: () => unwrap(apiClient.POST("/me/consent")),
+    // Atualiza o cache antes de o mutateAsync resolver: sem isso, o ConsentGate
+    // leria o valor antigo e devolveria o usuário para /consentimento.
     onSuccess: () => {
+      queryClient.setQueryData(SESSION_QUERY_KEY, (current: { user: SessionUser | null; requiresConsentRenewal: boolean } | undefined) =>
+        current ? { ...current, requiresConsentRenewal: false } : current,
+      )
       queryClient.invalidateQueries({ queryKey: SESSION_QUERY_KEY })
     },
   })
